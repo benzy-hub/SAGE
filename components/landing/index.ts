@@ -1,0 +1,11 @@
+export { Header } from "./header";
+export { Hero } from "./hero";
+export { Features } from "./features";
+export { LetsMakeItHappen } from "./lets-make-it-happen";
+export { CaseStudies } from "./case-studies";
+export { HowItWorks } from "./how-it-works";
+export { Roles } from "./roles";
+export { Testimonials } from "./testimonials";
+export { Contact } from "./contact";
+export { Footer } from "./footer";
+export { PageLoader } from "./page-loader";
