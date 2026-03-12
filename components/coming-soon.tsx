@@ -14,7 +14,6 @@ export function ComingSoon({
   title = "Coming Soon",
   description = "We're working hard to bring you something amazing. This feature is currently under development and will be available soon.",
 }: ComingSoonProps) {
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -51,10 +50,11 @@ export function ComingSoon({
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-2xl mx-auto text-center">
-
           {/* Badge */}
           <div className="inline-flex items-center justify-center px-4 py-1.5 bg-primary/10 rounded-full mb-6">
-            <span className="text-sm font-medium text-primary">Under Development</span>
+            <span className="text-sm font-medium text-primary">
+              Under Development
+            </span>
           </div>
 
           {/* Title & Description */}
@@ -108,7 +108,9 @@ export function ComingSoon({
                   <h3 className="text-sm font-semibold text-foreground mb-1">
                     {feature.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground">{feature.desc}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {feature.desc}
+                  </p>
                 </div>
               ))}
             </div>

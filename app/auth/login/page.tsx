@@ -1,10 +1,15 @@
-import { ComingSoon } from "@/components/coming-soon";
+import { Suspense } from "react";
+import { LoginForm } from "@/components/auth/login-form";
+
+export const metadata = {
+  title: "Sign In - SAGE",
+  description: "Sign in to your SAGE account",
+};
 
 export default function LoginPage() {
   return (
-    <ComingSoon
-      title="Login Coming Soon"
-      description="We're putting the finishing touches on our secure login system. Soon you'll be able to access your personalized dashboard, manage appointments, and connect with advisors."
-    />
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
