@@ -27,7 +27,7 @@ export async function hashPassword(password: string): Promise<string> {
 
 export async function verifyPassword(
   password: string,
-  hash: string
+  hash: string,
 ): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
@@ -101,7 +101,7 @@ export interface EmailVerificationStatus {
 export function getVerificationStatus(
   attempts: number,
   maxAttempts: number,
-  expiresAt: Date
+  expiresAt: Date,
 ): EmailVerificationStatus {
   const now = new Date();
   const expiresIn = expiresAt.getTime() - now.getTime();

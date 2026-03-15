@@ -7,7 +7,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -15,7 +14,7 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 export function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams?.get("token") ?? null;
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,23 +27,21 @@ export function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <Card className="w-full">
-        <CardContent className="pt-6">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Invalid reset link. Please request a new one.
-            </AlertDescription>
-          </Alert>
-          <div className="mt-4">
-            <Link href="/auth/forgot-password">
-              <Button variant="outline" className="w-full">
-                Request New Link
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-full pt-2">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Invalid reset link. Please request a new one.
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4">
+          <Link href="/auth/forgot-password">
+            <Button variant="outline" className="w-full sage-auth-btn-outline">
+              Request New Link
+            </Button>
+          </Link>
+        </div>
+      </div>
     );
   }
 
@@ -102,102 +99,110 @@ export function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-4 py-4">
         <div className="flex justify-center">
           <CheckCircle2 className="w-16 h-16 text-green-500" />
         </div>
         <h2 className="text-2xl font-bold">Password Reset!</h2>
-        <p className="text-gray-600">Your password has been successfully updated.</p>
-        <p className="text-gray-600">Redirecting to login...</p>
+        <p className="text-muted-foreground">
+          Your password has been successfully updated.
+        </p>
+        <p className="text-muted-foreground">Redirecting to login...</p>
       </div>
     );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="space-y-2">
-        <CardTitle className="text-2xl">Create New Password</CardTitle>
-        <CardDescription>
+    <div className="w-full">
+      <div className="mb-6 space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          Create New Password
+        </h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Enter a strong password to secure your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        </p>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">New Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter a strong password"
-              value={formData.password}
-              onChange={handlePasswordChange}
-              required
-              disabled={isLoading}
-            />
-            {formData.password && (
-              <div className="flex gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1 flex-1 rounded-full ${
-                      i < passwordStrength ? "bg-green-500" : "bg-gray-200"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-            <p className="text-xs text-gray-600">
-              Must contain uppercase, lowercase, number, and special character
-            </p>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="Confirm your password"
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  confirmPassword: e.target.value,
-                }))
-              }
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <Button
-            type="submit"
+        <div className="space-y-2">
+          <Label htmlFor="password">New Password</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Enter a strong password"
+            className="sage-auth-input"
+            value={formData.password}
+            onChange={handlePasswordChange}
+            required
             disabled={isLoading}
-            className="w-full bg-linear-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
-          >
-            {isLoading ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                Resetting...
-              </>
-            ) : (
-              "Reset Password"
-            )}
-          </Button>
-
-          <p className="text-center text-sm text-gray-600">
-            <Link href="/auth/login" className="text-purple-600 hover:underline font-medium">
-              Back to login
-            </Link>
+          />
+          {formData.password && (
+            <div className="flex gap-1">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1 flex-1 rounded-full ${
+                    i < passwordStrength ? "bg-primary" : "bg-muted"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Must contain uppercase, lowercase, number, and special character
           </p>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            placeholder="Confirm your password"
+            className="sage-auth-input"
+            value={formData.confirmPassword}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                confirmPassword: e.target.value,
+              }))
+            }
+            required
+            disabled={isLoading}
+          />
+        </div>
+
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full sage-auth-btn"
+        >
+          {isLoading ? (
+            <>
+              <Spinner className="mr-2 h-4 w-4" />
+              Resetting...
+            </>
+          ) : (
+            "Reset Password"
+          )}
+        </Button>
+
+        <p className="text-center text-sm text-gray-600">
+          <Link
+            href="/auth/login"
+            className="text-foreground hover:text-primary underline underline-offset-4 font-medium"
+          >
+            Back to login
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }

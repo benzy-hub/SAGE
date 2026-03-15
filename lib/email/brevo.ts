@@ -314,7 +314,7 @@ export async function sendPasswordResetSuccessEmail({
 
 export async function sendAccountLockedNotification(
   email: string,
-  firstName: string
+  firstName: string,
 ): Promise<boolean> {
   const html = `
     <!DOCTYPE html>

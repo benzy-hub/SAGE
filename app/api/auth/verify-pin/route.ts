@@ -1,7 +1,12 @@
 // app/api/auth/verify-pin/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { User, EmailVerificationToken, initializeModels, AccountStatus } from "@/lib/db/models";
+import {
+  User,
+  EmailVerificationToken,
+  initializeModels,
+  AccountStatus,
+} from "@/lib/db/models";
 import { verifyPinSchema } from "@/lib/auth/validation";
 import { normalizeEmail } from "@/lib/auth/utils";
 
@@ -16,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (!email || !pin) {
       return NextResponse.json(
         { error: "Email and PIN are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -24,7 +29,7 @@ export async function POST(req: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { error: "PIN must be 6 digits" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -33,10 +38,7 @@ export async function POST(req: NextRequest) {
     // Find user
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Find verification token
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest) {
     if (!verificationToken) {
       return NextResponse.json(
         { error: "No verification request found. Please sign up again." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -55,7 +57,7 @@ export async function POST(req: NextRequest) {
     if (verificationToken.expiresAt < new Date()) {
       return NextResponse.json(
         { error: "Verification code expired. Request a new one." },
-        { status: 410 }
+        { status: 410 },
       );
     }
 
@@ -66,7 +68,7 @@ export async function POST(req: NextRequest) {
           error: "Too many failed attempts. Request a new code.",
           attemptsRemaining: 0,
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -80,10 +82,10 @@ export async function POST(req: NextRequest) {
           error: "Invalid PIN",
           attemptsRemaining: Math.max(
             0,
-            verificationToken.maxAttempts - verificationToken.attempts
+            verificationToken.maxAttempts - verificationToken.attempts,
           ),
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -108,13 +110,13 @@ export async function POST(req: NextRequest) {
           role: user.role,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("[VerifyPin] Error:", error);
     return NextResponse.json(
       { error: "Failed to verify PIN. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

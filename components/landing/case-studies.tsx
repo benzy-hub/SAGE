@@ -49,7 +49,7 @@ export function CaseStudies() {
               key={index}
               className="group bg-foreground border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden transition-all duration-300 hover:shadow-xl"
             >
-              <CardContent className="p-5 sm:p-6 lg:p-8 flex flex-col min-h-[280px] sm:min-h-[320px]">
+              <CardContent className="p-5 sm:p-6 lg:p-8 flex flex-col min-h-70 sm:min-h-80">
                 {/* Title */}
                 <h3 className="text-lg sm:text-xl font-semibold text-background mb-4">
                   {study.title}

@@ -17,7 +17,10 @@ declare global {
   var mongoCache: CachedConnection | undefined;
 }
 
-let cached: CachedConnection = global.mongoCache || { conn: null, promise: null };
+let cached: CachedConnection = global.mongoCache || {
+  conn: null,
+  promise: null,
+};
 
 if (!global.mongoCache) {
   global.mongoCache = cached;

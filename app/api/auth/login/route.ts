@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { error: "Invalid email or password" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
             error: `Too many failed attempts. Try again in ${remainingSeconds} seconds.`,
             attemptsRemaining: 0,
           },
-          { status: 429 }
+          { status: 429 },
         );
       }
     } else {
@@ -46,7 +46,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Find user
-    const user = await User.findOne({ email: normalizedEmail }).select("+password");
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password",
+    );
 
     if (!user) {
       // Record failed attempt
@@ -57,7 +59,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(
         { error: "Invalid email or password" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -68,7 +70,7 @@ export async function POST(req: NextRequest) {
           error: "Please verify your email before signing in",
           requiresVerification: true,
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -76,7 +78,7 @@ export async function POST(req: NextRequest) {
     if (user.status !== AccountStatus.ACTIVE) {
       return NextResponse.json(
         { error: "Your account is not active. Please contact support." },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -97,10 +99,10 @@ export async function POST(req: NextRequest) {
           error: "Invalid email or password",
           attemptsRemaining: Math.max(
             0,
-            RATE_LIMITS.LOGIN_ATTEMPTS_MAX - currentAttempt.count
+            RATE_LIMITS.LOGIN_ATTEMPTS_MAX - currentAttempt.count,
           ),
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -123,7 +125,7 @@ export async function POST(req: NextRequest) {
           role: user.role,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
 
     // Set secure session cookie (example - implement proper session handling)
@@ -139,7 +141,7 @@ export async function POST(req: NextRequest) {
     console.error("[Login] Error:", error);
     return NextResponse.json(
       { error: "Failed to sign in. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

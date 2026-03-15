@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { PanelLeftOpen, PanelLeftClose } from "lucide-react";
 
 const navigation = [
   { name: "Services", href: "#services" },
@@ -18,6 +18,29 @@ const navigation = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        const data = await res.json();
+        if (!active) return;
+        setIsAuthenticated(Boolean(data?.authenticated));
+      } catch {
+        if (!active) return;
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkSession();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -67,35 +90,60 @@ export function Header() {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-4">
-            <Button
-              variant="outline"
-              className="border-2 border-foreground hover:bg-foreground hover:text-background transition-all duration-200"
-              asChild
-              size="lg"
-            >
-              <Link href="/auth/login">Login</Link>
-            </Button>
-            <Button
-              className="bg-foreground text-background hover:bg-primary transition-all duration-200"
-              asChild
-              size="lg"
-            >
-              <Link href="/auth/signup">Get Started</Link>
-            </Button>
+            {isAuthenticated ? (
+              <Button
+                className="bg-foreground text-background hover:bg-primary transition-all duration-200"
+                asChild
+                size="lg"
+              >
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  className="border-2 border-foreground hover:bg-foreground hover:text-background transition-all duration-200"
+                  asChild
+                  size="lg"
+                >
+                  <Link href="/auth/login">Login</Link>
+                </Button>
+                <Button
+                  className="bg-foreground text-background hover:bg-primary transition-all duration-200"
+                  asChild
+                  size="lg"
+                >
+                  <Link href="/auth/signup">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            className="lg:hidden p-2 rounded-lg hover:bg-foreground/5 transition-colors"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="w-6 h-6 text-foreground" />
-            ) : (
-              <Menu className="w-6 h-6 text-foreground" />
-            )}
-          </button>
+          {/* Mobile CTA + Sidebar Toggle */}
+          <div className="lg:hidden flex items-center gap-2">
+            <Button
+              size="sm"
+              className="h-9 px-3 bg-foreground text-background hover:bg-primary"
+              asChild
+            >
+              <Link href={isAuthenticated ? "/dashboard" : "/auth/signup"}>
+                {isAuthenticated ? "Dashboard" : "Get Started"}
+              </Link>
+            </Button>
+
+            <button
+              type="button"
+              aria-label="Toggle sidebar menu"
+              className="p-2 rounded-lg border-2 border-foreground/20 hover:border-foreground hover:bg-foreground/5 transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? (
+                <PanelLeftClose className="w-5 h-5 text-foreground" />
+              ) : (
+                <PanelLeftOpen className="w-5 h-5 text-foreground" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -113,21 +161,33 @@ export function Header() {
                 </Link>
               ))}
               <div className="flex flex-col gap-3 pt-4 border-t border-foreground/10">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full border-2 border-foreground hover:bg-foreground hover:text-background"
-                  asChild
-                >
-                  <Link href="/auth/login">Login</Link>
-                </Button>
-                <Button
-                  size="lg"
-                  className="w-full bg-foreground text-background hover:bg-primary"
-                  asChild
-                >
-                  <Link href="/auth/signup">Get Started</Link>
-                </Button>
+                {isAuthenticated ? (
+                  <Button
+                    size="lg"
+                    className="w-full bg-foreground text-background hover:bg-primary"
+                    asChild
+                  >
+                    <Link href="/dashboard">Dashboard</Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full border-2 border-foreground hover:bg-foreground hover:text-background"
+                      asChild
+                    >
+                      <Link href="/auth/login">Login</Link>
+                    </Button>
+                    <Button
+                      size="lg"
+                      className="w-full bg-foreground text-background hover:bg-primary"
+                      asChild
+                    >
+                      <Link href="/auth/signup">Get Started</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>

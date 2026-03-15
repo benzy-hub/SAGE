@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -48,19 +47,21 @@ export function ForgotPasswordForm() {
 
   if (success) {
     return (
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-4 py-4">
         <div className="flex justify-center">
           <CheckCircle2 className="w-16 h-16 text-green-500" />
         </div>
         <h2 className="text-2xl font-bold">Check Your Email</h2>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           We've sent a password reset link to <strong>{email}</strong>
         </p>
-        <p className="text-sm text-gray-500">The link expires in 1 hour.</p>
+        <p className="text-sm text-muted-foreground">
+          The link expires in 1 hour.
+        </p>
         <Button
           onClick={() => router.push("/auth/login")}
           variant="outline"
-          className="mt-4"
+          className="mt-4 sage-auth-btn-outline"
         >
           Back to Login
         </Button>
@@ -69,62 +70,67 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="space-y-2">
-        <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-        <CardDescription>
+    <div className="w-full">
+      <div className="mb-6 space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          Reset Your Password
+        </h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Enter your email and we'll send you a link to reset your password
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        </p>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@university.edu"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-              autoComplete="email"
-            />
-            <p className="text-xs text-gray-500">
-              We'll send a reset link to this email address.
-            </p>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-          <Button
-            type="submit"
+        <div className="space-y-2">
+          <Label htmlFor="email">Email Address</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@university.edu"
+            className="sage-auth-input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
             disabled={isLoading}
-            className="w-full bg-linear-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
-          >
-            {isLoading ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                Sending...
-              </>
-            ) : (
-              "Send Reset Link"
-            )}
-          </Button>
-
-          <p className="text-center text-sm text-gray-600">
-            Remember your password?{" "}
-            <Link href="/auth/login" className="text-purple-600 hover:underline font-medium">
-              Sign in
-            </Link>
+            autoComplete="email"
+          />
+          <p className="text-xs text-muted-foreground">
+            We'll send a reset link to this email address.
           </p>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full sage-auth-btn"
+        >
+          {isLoading ? (
+            <>
+              <Spinner className="mr-2 h-4 w-4" />
+              Sending...
+            </>
+          ) : (
+            "Send Reset Link"
+          )}
+        </Button>
+
+        <p className="text-center text-sm text-gray-600">
+          Remember your password?{" "}
+          <Link
+            href="/auth/login"
+            className="text-foreground hover:text-primary underline underline-offset-4 font-medium"
+          >
+            Sign in
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 }

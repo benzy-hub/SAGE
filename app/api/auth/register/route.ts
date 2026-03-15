@@ -1,9 +1,20 @@
 // app/api/auth/register/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { User, EmailVerificationToken, Role, AccountStatus, initializeModels } from "@/lib/db/models";
+import {
+  User,
+  EmailVerificationToken,
+  Role,
+  AccountStatus,
+  initializeModels,
+} from "@/lib/db/models";
 import { signupSchema } from "@/lib/auth/validation";
-import { hashPassword, generatePin, getPinExpiryTime, normalizeEmail } from "@/lib/auth/utils";
+import {
+  hashPassword,
+  generatePin,
+  getPinExpiryTime,
+  normalizeEmail,
+} from "@/lib/auth/utils";
 import { sendWelcomeEmail, sendVerificationPin } from "@/lib/email/brevo";
 
 export async function POST(req: NextRequest) {
@@ -17,7 +28,7 @@ export async function POST(req: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { error: validation.error.issues[0]?.message || "Validation failed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -28,8 +39,11 @@ export async function POST(req: NextRequest) {
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return NextResponse.json(
-        { error: "Email already registered. Please sign in or use a different email." },
-        { status: 409 }
+        {
+          error:
+            "Email already registered. Please sign in or use a different email.",
+        },
+        { status: 409 },
       );
     }
 
@@ -86,13 +100,13 @@ export async function POST(req: NextRequest) {
         message: "Account created! Check your email for verification code.",
         userId: user._id.toString(),
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("[Register] Error:", error);
     return NextResponse.json(
       { error: "Failed to create account. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

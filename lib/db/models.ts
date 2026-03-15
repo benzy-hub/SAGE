@@ -81,10 +81,9 @@ const userSchema = new Schema<IUser>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ status: 1 });
 userSchema.index({ createdAt: -1 });
@@ -129,7 +128,7 @@ const emailVerificationTokenSchema = new Schema<IEmailVerificationToken>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // ─────────────────────────────────────────────
@@ -166,7 +165,7 @@ const passwordResetTokenSchema = new Schema<IPasswordResetToken>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // ─────────────────────────────────────────────
@@ -202,7 +201,7 @@ const sessionSchema = new Schema<ISession>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // ─────────────────────────────────────────────
@@ -243,7 +242,7 @@ const accountSchema = new Schema<IAccount>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 accountSchema.index({ userId: 1, provider: 1, providerAccountId: 1 });
@@ -283,11 +282,108 @@ const studentProfileSchema = new Schema<IStudentProfile>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-studentProfileSchema.index({ studentId: 1 });
-studentProfileSchema.index({ userId: 1 });
+// ─────────────────────────────────────────────
+// Chat Message Model
+// ─────────────────────────────────────────────
+
+export interface IChatMessage extends Document {
+  senderId: Types.ObjectId;
+  recipientId: Types.ObjectId;
+  content: string;
+  readAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const chatMessageSchema = new Schema<IChatMessage>(
+  {
+    senderId: {
+      type: Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    recipientId: {
+      type: Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    content: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 2000,
+    },
+    readAt: Date,
+  },
+  {
+    timestamps: true,
+  },
+);
+
+chatMessageSchema.index({ senderId: 1, recipientId: 1, createdAt: -1 });
+chatMessageSchema.index({ recipientId: 1, readAt: 1, createdAt: -1 });
+
+// ─────────────────────────────────────────────
+// Advisor-Student Connection Model
+// ─────────────────────────────────────────────
+
+export enum ConnectionStatus {
+  PENDING = "PENDING",
+  ACCEPTED = "ACCEPTED",
+  REJECTED = "REJECTED",
+}
+
+export interface IAdvisorStudentConnection extends Document {
+  advisorId: Types.ObjectId;
+  studentId: Types.ObjectId;
+  requestedBy: Types.ObjectId;
+  status: ConnectionStatus;
+  acceptedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const advisorStudentConnectionSchema = new Schema<IAdvisorStudentConnection>(
+  {
+    advisorId: {
+      type: Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    studentId: {
+      type: Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    requestedBy: {
+      type: Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: Object.values(ConnectionStatus),
+      default: ConnectionStatus.PENDING,
+      index: true,
+    },
+    acceptedAt: Date,
+  },
+  {
+    timestamps: true,
+  },
+);
+
+advisorStudentConnectionSchema.index(
+  { advisorId: 1, studentId: 1 },
+  { unique: true },
+);
 
 // ─────────────────────────────────────────────
 // Model Creation
@@ -299,6 +395,8 @@ export let PasswordResetToken: Model<IPasswordResetToken>;
 export let Session: Model<ISession>;
 export let Account: Model<IAccount>;
 export let StudentProfile: Model<IStudentProfile>;
+export let ChatMessage: Model<IChatMessage>;
+export let AdvisorStudentConnection: Model<IAdvisorStudentConnection>;
 
 export function initializeModels() {
   try {
@@ -310,23 +408,22 @@ export function initializeModels() {
   try {
     EmailVerificationToken = mongoose.model<IEmailVerificationToken>(
       "EmailVerificationToken",
-      emailVerificationTokenSchema
+      emailVerificationTokenSchema,
     );
   } catch {
     EmailVerificationToken = mongoose.model<IEmailVerificationToken>(
-      "EmailVerificationToken"
+      "EmailVerificationToken",
     );
   }
 
   try {
     PasswordResetToken = mongoose.model<IPasswordResetToken>(
       "PasswordResetToken",
-      passwordResetTokenSchema
+      passwordResetTokenSchema,
     );
   } catch {
-    PasswordResetToken = mongoose.model<IPasswordResetToken>(
-      "PasswordResetToken"
-    );
+    PasswordResetToken =
+      mongoose.model<IPasswordResetToken>("PasswordResetToken");
   }
 
   try {
@@ -344,9 +441,29 @@ export function initializeModels() {
   try {
     StudentProfile = mongoose.model<IStudentProfile>(
       "StudentProfile",
-      studentProfileSchema
+      studentProfileSchema,
     );
   } catch {
     StudentProfile = mongoose.model<IStudentProfile>("StudentProfile");
+  }
+
+  try {
+    ChatMessage = mongoose.model<IChatMessage>(
+      "ChatMessage",
+      chatMessageSchema,
+    );
+  } catch {
+    ChatMessage = mongoose.model<IChatMessage>("ChatMessage");
+  }
+
+  try {
+    AdvisorStudentConnection = mongoose.model<IAdvisorStudentConnection>(
+      "AdvisorStudentConnection",
+      advisorStudentConnectionSchema,
+    );
+  } catch {
+    AdvisorStudentConnection = mongoose.model<IAdvisorStudentConnection>(
+      "AdvisorStudentConnection",
+    );
   }
 }

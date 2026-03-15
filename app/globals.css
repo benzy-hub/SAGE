@@ -125,6 +125,53 @@
   }
 }
 
+@layer components {
+  .sage-section-chip {
+    @apply inline-flex items-center justify-center px-4 sm:px-5 py-1.5 sm:py-2 bg-primary rounded-lg;
+  }
+
+  .sage-auth-page {
+    @apply min-h-screen bg-background;
+  }
+
+  .sage-auth-shell {
+    @apply bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden;
+  }
+
+  .sage-auth-form-wrap {
+    @apply bg-background border-2 border-foreground rounded-[1.6rem] sm:rounded-[2rem] p-5 sm:p-6 lg:p-7;
+  }
+
+  .sage-auth-visual {
+    @apply rounded-[1.6rem] sm:rounded-[2rem] bg-background border-2 border-foreground p-7 xl:p-8 flex-col justify-between;
+  }
+
+  .sage-auth-input {
+    @apply h-11 sm:h-12 border-2 border-foreground bg-background focus:border-primary focus:ring-0 text-sm;
+  }
+
+  .sage-auth-select {
+    @apply w-full h-11 sm:h-12 px-3 sm:px-4 border-2 border-foreground bg-background rounded-md text-sm focus:border-primary focus:outline-none;
+  }
+
+  .sage-auth-btn {
+    @apply h-12 bg-foreground text-background hover:bg-foreground/90 font-medium text-sm transition-all duration-200 hover:scale-[1.01];
+  }
+
+  .sage-auth-btn-outline {
+    @apply h-11 sm:h-12 border-2 border-foreground bg-background hover:bg-foreground hover:text-background text-sm font-medium;
+  }
+
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -185,4 +232,194 @@ html {
 
 .animate-loading-bar {
   animation: loading-bar 1.5s ease-in-out infinite;
+}
+
+/* Mobile-Responsive Messaging UI */
+@keyframes pulse-badge {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-badge {
+  animation: pulse-badge 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* WhatsApp-Style Message Animations */
+@keyframes message-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-animate {
+  animation: message-slide-in 0.3s ease-out;
+}
+
+/* Smart Loading States */
+.skeleton-loading {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.1) 25%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.1) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Mobile Touch Optimization */
+@media (max-width: 1024px) {
+  button,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+  }
+}
+
+/* Read Receipt Indicators */
+.read-receipt {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ─── Native App Feel ────────────────────────────────────────────────────── */
+
+/* Remove iOS tap highlight & 300ms delay globally */
+*,
+*::before,
+*::after {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Smooth font rendering */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Use dynamic viewport height on mobile so the shell fills the real screen */
+  height: -webkit-fill-available;
+}
+
+body {
+  /* Prevent rubber-band over-scroll at page level */
+  overscroll-behavior-y: none;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+}
+
+/* Lock body scroll when a sheet/drawer is open (add class via JS) */
+body.nav-open {
+  overflow: hidden;
+}
+
+/* Momentum (inertia) scrolling for any scrollable container */
+.native-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Safe-area utility classes (for iPhone notch / home indicator) */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pb-safe-nav {
+  /* Bottom nav height + safe area inset */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+}
+
+/* Subtle scale-down feedback on tappable elements */
+button:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]) {
+  transform: scale(0.97);
+  transition: transform 0.08s ease;
+}
+
+/* Keep link tap feedback clean */
+a:active {
+  opacity: 0.75;
+  transition: opacity 0.08s ease;
+}
+
+/* Prevent text selection in nav / interactive chrome */
+nav,
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Full-height container using dvh */
+.h-dvh {
+  height: 100dvh;
+}
+
+/* Responsive Typography */
+@media (max-width: 640px) {
+  .text-responsive-base {
+    font-size: 0.875rem; /* 14px */
+  }
+
+  .text-responsive-lg {
+    font-size: 1rem; /* 16px */
+  }
+
+  .text-responsive-xl {
+    font-size: 1.125rem; /* 18px */
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .text-responsive-base {
+    font-size: 0.9375rem; /* 15px */
+  }
+
+  .text-responsive-lg {
+    font-size: 1.0625rem; /* 17px */
+  }
+
+  .text-responsive-xl {
+    font-size: 1.1875rem; /* 19px */
+  }
+}
+
+@media (min-width: 1025px) {
+  .text-responsive-base {
+    font-size: 1rem; /* 16px */
+  }
+
+  .text-responsive-lg {
+    font-size: 1.125rem; /* 18px */
+  }
+
+  .text-responsive-xl {
+    font-size: 1.25rem; /* 20px */
+  }
 }

@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { error: validation.error.issues[0]?.message || "Validation failed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (!resetToken) {
       return NextResponse.json(
         { error: "Invalid or expired reset link" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     if (resetToken.expiresAt < new Date()) {
       return NextResponse.json(
         { error: "Reset link has expired. Please request a new one." },
-        { status: 410 }
+        { status: 410 },
       );
     }
 
@@ -48,17 +48,14 @@ export async function POST(req: NextRequest) {
     if (resetToken.usedAt) {
       return NextResponse.json(
         { error: "This reset link has already been used" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Update user password
     const user = await User.findById(resetToken.userId);
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     user.password = await hashPassword(password);
@@ -83,13 +80,13 @@ export async function POST(req: NextRequest) {
         success: true,
         message: "Password reset successfully",
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("[ResetPassword] Error:", error);
     return NextResponse.json(
       { error: "Failed to reset password" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
