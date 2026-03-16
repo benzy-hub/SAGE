@@ -6,6 +6,7 @@ import {
   EmailVerificationToken,
   initializeModels,
   AccountStatus,
+  Role,
 } from "@/lib/db/models";
 import { verifyPinSchema } from "@/lib/auth/validation";
 import { normalizeEmail } from "@/lib/auth/utils";
@@ -92,7 +93,11 @@ export async function POST(req: NextRequest) {
     // PIN is correct - mark email as verified
     user.isEmailVerified = true;
     user.emailVerifiedAt = new Date();
-    user.status = AccountStatus.ACTIVE;
+    // Advisors who self-registered require admin approval before they can log in
+    const pendingApproval = user.role === Role.ADVISOR;
+    user.status = pendingApproval
+      ? AccountStatus.PENDING_APPROVAL
+      : AccountStatus.ACTIVE;
     await user.save();
 
     // Delete verification token
@@ -101,7 +106,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: "Email verified successfully",
+        pendingApproval,
+        message: pendingApproval
+          ? "Email verified. Your advisor account is pending admin approval."
+          : "Email verified successfully",
         user: {
           id: user._id.toString(),
           email: user.email,

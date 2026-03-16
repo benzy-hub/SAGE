@@ -2,7 +2,30 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/db";
-import { AccountStatus, Role, User, initializeModels } from "@/lib/db/models";
+import {
+  AccountStatus,
+  AdvisorStudentConnection,
+  Appointment,
+  AppointmentStatus,
+  ConnectionStatus,
+  StudentProfile,
+  Role,
+  User,
+  initializeModels,
+} from "@/lib/db/models";
+
+function getSessionCountdownLabel(dateValue: Date): string {
+  const diffMs = dateValue.getTime() - Date.now();
+  if (diffMs <= 0) return "Starting soon";
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  if (diffMinutes < 60) return `In ${diffMinutes} min`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24)
+    return `In ${diffHours} hour${diffHours === 1 ? "" : "s"}`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "Tomorrow";
+  return `In ${diffDays} days`;
+}
 
 export default async function AdvisorDashboardPage() {
   await connectDB();
@@ -15,12 +38,106 @@ export default async function AdvisorDashboardPage() {
   if (!user) redirect("/auth/login");
   if (user.role !== Role.ADVISOR) redirect("/dashboard");
 
-  const [activeStudents, pendingVerification, totalAdvisors] =
+  const [
+    activeStudents,
+    pendingVerification,
+    totalAdvisors,
+    adviseeConnections,
+    upcomingAppointments,
+    pendingAppointmentRequests,
+  ] = await Promise.all([
+    User.countDocuments({ role: Role.STUDENT, status: AccountStatus.ACTIVE }),
+    User.countDocuments({ status: AccountStatus.PENDING_VERIFICATION }),
+    User.countDocuments({ role: Role.ADVISOR, status: AccountStatus.ACTIVE }),
+    AdvisorStudentConnection.find({
+      advisorId: user._id,
+      status: ConnectionStatus.ACCEPTED,
+    })
+      .sort({ updatedAt: -1 })
+      .select("studentId"),
+    Appointment.countDocuments({
+      advisorId: user._id,
+      status: { $in: [AppointmentStatus.CONFIRMED] },
+      scheduledFor: { $gt: new Date() },
+    }),
+    Appointment.countDocuments({
+      advisorId: user._id,
+      status: AppointmentStatus.REQUESTED,
+    }),
+  ]);
+
+  const adviseeIds = adviseeConnections.map((item) => item.studentId);
+
+  const [nextRequestedAppointment, nextConfirmedAppointment] =
     await Promise.all([
-      User.countDocuments({ role: Role.STUDENT, status: AccountStatus.ACTIVE }),
-      User.countDocuments({ status: AccountStatus.PENDING_VERIFICATION }),
-      User.countDocuments({ role: Role.ADVISOR, status: AccountStatus.ACTIVE }),
+      Appointment.findOne({
+        advisorId: user._id,
+        status: AppointmentStatus.REQUESTED,
+      })
+        .sort({ createdAt: -1 })
+        .populate("studentId", "_id firstName lastName")
+        .select("studentId scheduledFor agenda createdAt")
+        .lean(),
+      Appointment.findOne({
+        advisorId: user._id,
+        status: AppointmentStatus.CONFIRMED,
+        scheduledFor: { $gt: new Date() },
+      })
+        .sort({ scheduledFor: 1 })
+        .populate("studentId", "_id firstName lastName")
+        .select("studentId scheduledFor agenda")
+        .lean(),
     ]);
+
+  const nextRequestedStudent =
+    nextRequestedAppointment &&
+    typeof nextRequestedAppointment.studentId === "object"
+      ? (nextRequestedAppointment.studentId as unknown as {
+          _id: string;
+          firstName: string;
+          lastName: string;
+        })
+      : null;
+
+  const nextConfirmedStudent =
+    nextConfirmedAppointment &&
+    typeof nextConfirmedAppointment.studentId === "object"
+      ? (nextConfirmedAppointment.studentId as unknown as {
+          _id: string;
+          firstName: string;
+          lastName: string;
+        })
+      : null;
+
+  const [adviseeProfiles, adviseeUsers] = await Promise.all([
+    StudentProfile.find({ userId: { $in: adviseeIds } }).select(
+      "userId college department level year studentId",
+    ),
+    User.find({ _id: { $in: adviseeIds } }).select(
+      "_id firstName lastName email",
+    ),
+  ]);
+
+  const adviseeUserMap = new Map(
+    adviseeUsers.map((student) => [student._id.toString(), student]),
+  );
+
+  const profileRows = adviseeProfiles
+    .map((profile) => {
+      const student = adviseeUserMap.get(profile.userId.toString());
+      if (!student) return null;
+      return {
+        id: profile.userId.toString(),
+        fullName: `${student.firstName} ${student.lastName}`,
+        email: student.email,
+        studentId: profile.studentId,
+        college: profile.college ?? "—",
+        department: profile.department ?? "—",
+        level: profile.level ?? (profile.year ? `${profile.year * 100}` : "—"),
+      };
+    })
+    .filter((item) => item !== null)
+    .slice(0, 8);
 
   const quickLinks = [
     {
@@ -54,23 +171,134 @@ export default async function AdvisorDashboardPage() {
       <section className="bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 lg:p-8">
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
           <div className="bg-background border-2 border-foreground rounded-2xl p-5">
-            <p className="text-sm text-muted-foreground">Active students</p>
+            <p className="text-sm text-muted-foreground">My advisees</p>
+            <p className="text-3xl font-bold mt-2">
+              {adviseeConnections.length}
+            </p>
+            <Link
+              href="/dashboard/advisor/advisees"
+              className="text-xs text-primary font-medium hover:underline mt-1 block"
+            >
+              View all →
+            </Link>
+          </div>
+          <div className="bg-background border-2 border-foreground rounded-2xl p-5">
+            <p className="text-sm text-muted-foreground">Upcoming sessions</p>
+            <p className="text-3xl font-bold mt-2">{upcomingAppointments}</p>
+            {upcomingAppointments > 0 ? (
+              <Link
+                href="/dashboard/advisor/appointments"
+                className="text-xs text-primary font-medium hover:underline mt-1 block"
+              >
+                View schedule →
+              </Link>
+            ) : null}
+          </div>
+          <div className="bg-background border-2 border-foreground rounded-2xl p-5">
+            <p className="text-sm text-muted-foreground">Pending requests</p>
+            <p className="text-3xl font-bold mt-2">
+              {pendingAppointmentRequests}
+            </p>
+            {pendingAppointmentRequests > 0 ? (
+              <Link
+                href="/dashboard/advisor/appointments"
+                className="text-xs text-destructive font-medium hover:underline mt-1 block"
+              >
+                Review now →
+              </Link>
+            ) : null}
+          </div>
+          <div className="bg-background border-2 border-foreground rounded-2xl p-5">
+            <p className="text-sm text-muted-foreground">Platform students</p>
             <p className="text-3xl font-bold mt-2">{activeStudents}</p>
           </div>
-          <div className="bg-background border-2 border-foreground rounded-2xl p-5">
-            <p className="text-sm text-muted-foreground">Advisor team online</p>
-            <p className="text-3xl font-bold mt-2">{totalAdvisors}</p>
-          </div>
-          <div className="bg-background border-2 border-foreground rounded-2xl p-5">
-            <p className="text-sm text-muted-foreground">
-              Pending verifications
+        </div>
+
+        <div className="mt-4 grid lg:grid-cols-2 gap-3">
+          <article className="rounded-2xl border-2 border-amber-300/60 bg-amber-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">
+              Pending appointment request
             </p>
-            <p className="text-3xl font-bold mt-2">{pendingVerification}</p>
-          </div>
-          <div className="bg-background border-2 border-foreground rounded-2xl p-5">
-            <p className="text-sm text-muted-foreground">Workspace status</p>
-            <p className="text-3xl font-bold mt-2">Ready</p>
-          </div>
+            {nextRequestedAppointment && nextRequestedStudent ? (
+              <>
+                <p className="mt-1 text-sm text-foreground">
+                  {nextRequestedStudent.firstName}{" "}
+                  {nextRequestedStudent.lastName} requested a session.
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Scheduled for{" "}
+                  {new Date(
+                    nextRequestedAppointment.scheduledFor,
+                  ).toLocaleString()}
+                  .
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Link
+                    href="/dashboard/advisor/appointments"
+                    className="inline-flex items-center rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-background hover:bg-primary"
+                  >
+                    Review request
+                  </Link>
+                  <Link
+                    href={`/dashboard/advisor/messages?contactId=${encodeURIComponent(nextRequestedStudent._id)}`}
+                    className="inline-flex items-center rounded-lg border border-foreground/20 bg-white px-3 py-2 text-sm font-medium hover:bg-secondary"
+                  >
+                    Message student
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">
+                No pending requests right now.
+              </p>
+            )}
+          </article>
+
+          <article className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-4">
+            <p className="text-xs uppercase tracking-wide text-primary font-semibold">
+              Next confirmed session
+            </p>
+            {nextConfirmedAppointment && nextConfirmedStudent ? (
+              <>
+                <p className="mt-1 text-sm text-foreground">
+                  {nextConfirmedStudent.firstName}{" "}
+                  {nextConfirmedStudent.lastName} ·{" "}
+                  {getSessionCountdownLabel(
+                    new Date(nextConfirmedAppointment.scheduledFor),
+                  )}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {new Date(
+                    nextConfirmedAppointment.scheduledFor,
+                  ).toLocaleString()}
+                </p>
+                {nextConfirmedAppointment.agenda ? (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Agenda: {nextConfirmedAppointment.agenda}
+                  </p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Link
+                    href="/dashboard/advisor/appointments"
+                    className="inline-flex items-center rounded-lg border border-foreground/20 bg-background px-3 py-2 text-sm font-medium hover:bg-secondary"
+                  >
+                    Open schedule
+                  </Link>
+                  <Link
+                    href={`/dashboard/advisor/messages?contactId=${encodeURIComponent(nextConfirmedStudent._id)}`}
+                    className="inline-flex items-center rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-background hover:bg-primary"
+                  >
+                    Chat student
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">
+                No confirmed sessions yet. Confirm a request to lock in your
+                next session.
+              </p>
+            )}
+          </article>
         </div>
 
         <div className="mt-5 grid xl:grid-cols-[1.2fr_0.8fr] gap-4 sm:gap-5">
@@ -123,6 +351,85 @@ export default async function AdvisorDashboardPage() {
 
       <section className="bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 lg:p-8">
         <h2 className="text-xl sm:text-2xl font-semibold">
+          Advisee profile snapshot
+        </h2>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">
+          College, department, level and matric information for your currently
+          accepted advisees.
+        </p>
+
+        <div
+          data-tour="advisor-advisee-table"
+          className="mt-5 overflow-x-auto rounded-2xl border-2 border-foreground bg-background"
+        >
+          {profileRows.length === 0 ? (
+            <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+              No accepted advisees yet.
+            </div>
+          ) : (
+            <table className="w-full min-w-215">
+              <thead>
+                <tr className="border-b border-foreground/10">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    S/N
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Student
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Email
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Matric
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    College
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Department
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Level
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {profileRows.map((row, index) => (
+                  <tr
+                    key={row.id}
+                    className="border-b border-foreground/10 last:border-none"
+                  >
+                    <td className="px-4 py-3 text-sm text-muted-foreground font-medium">
+                      {index + 1}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-foreground">
+                      {row.fullName}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-foreground">
+                      {row.email}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-foreground">
+                      {row.studentId}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-foreground">
+                      {row.college}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-foreground">
+                      {row.department}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-foreground">
+                      {row.level}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
+
+      <section className="bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 lg:p-8">
+        <h2 className="text-xl sm:text-2xl font-semibold">
           Advisor workspace modules
         </h2>
         <p className="text-sm sm:text-base text-muted-foreground mt-1">
@@ -135,6 +442,7 @@ export default async function AdvisorDashboardPage() {
             <Link
               key={item.href}
               href={item.href}
+              data-tour={`advisor-module-${item.href.split("/").pop()}`}
               className="group bg-background border-2 border-foreground rounded-2xl p-5 hover:-translate-y-0.5 transition-all"
             >
               <p className="text-base font-semibold text-foreground">

@@ -1,22 +1,41 @@
-import { AdminPageComingSoon } from "@/components/dashboard/admin/admin-page-coming-soon";
+"use client";
+
+import { AdminDataView } from "@/components/dashboard/admin/admin-data-view";
+import { useAdminAuditLog } from "@/hooks/use-admin";
+
+interface AuditRow {
+  id: string;
+  category: string;
+  action: string;
+  actor: string;
+  occurredAt: string;
+  severity: "LOW" | "MEDIUM" | "HIGH";
+}
 
 export default function AdminAuditLogPage() {
+  const { data, isLoading, error } = useAdminAuditLog();
+
   return (
-    <AdminPageComingSoon
+    <AdminDataView<AuditRow>
       title="Audit Log"
-      summary="Maintain compliance and transparency with a tamper-aware timeline of key administrative and security-sensitive actions."
-      outcomes={[
-        "Chronological trail of account and policy changes.",
-        "Actor visibility for who changed what and when.",
-        "Security event monitoring for suspicious behavior.",
-        "Compliance export pipeline for internal reviews.",
+      summary="Review operational and security events with actor attribution, severity levels, and event chronology."
+      loading={isLoading}
+      error={error instanceof Error ? error.message : undefined}
+      metrics={data?.metrics}
+      items={data?.items ?? []}
+      columns={[
+        { key: "category", label: "Category", render: (row) => row.category },
+        { key: "action", label: "Action", render: (row) => row.action },
+        { key: "actor", label: "Actor", render: (row) => row.actor },
+        { key: "severity", label: "Severity", render: (row) => row.severity },
+        {
+          key: "occurredAt",
+          label: "Occurred",
+          render: (row) => new Date(row.occurredAt).toLocaleString(),
+        },
       ]}
-      implementationPlan={[
-        "Capture critical admin events with immutable metadata.",
-        "Add searchable timeline with event categories.",
-        "Implement severity-based alerting and flags.",
-        "Enable secure exports for compliance workflows.",
-      ]}
+      emptyTitle="No audit events"
+      emptyMessage="Audit entries will populate as administrative and user actions occur."
     />
   );
 }

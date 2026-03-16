@@ -1,22 +1,43 @@
-import { AdminPageComingSoon } from "@/components/dashboard/admin/admin-page-coming-soon";
+"use client";
+
+import { AdminDataView } from "@/components/dashboard/admin/admin-data-view";
+import { useAdminIntegrations } from "@/hooks/use-admin";
+
+interface IntegrationRow {
+  id: string;
+  name: string;
+  status: string;
+  lastSyncAt: string;
+  successRate: number;
+}
 
 export default function AdminIntegrationsPage() {
+  const { data, isLoading, error } = useAdminIntegrations();
+
   return (
-    <AdminPageComingSoon
+    <AdminDataView<IntegrationRow>
       title="Integrations & API"
-      summary="Connect SAGE with campus systems and external services to automate identity sync, scheduling, reporting, and operational workflows."
-      outcomes={[
-        "Manage third-party connectors and integration health status.",
-        "Map data sync rules for SIS, LMS, and calendar providers.",
-        "Control API credentials, scopes, and environment settings.",
-        "Monitor sync failures with actionable diagnostics and retries.",
+      summary="Monitor third-party integration reliability, synchronization freshness, and platform connector health."
+      loading={isLoading}
+      error={error instanceof Error ? error.message : undefined}
+      metrics={data?.metrics}
+      items={data?.items ?? []}
+      columns={[
+        { key: "name", label: "Integration", render: (row) => row.name },
+        { key: "status", label: "Status", render: (row) => row.status },
+        {
+          key: "lastSyncAt",
+          label: "Last Sync",
+          render: (row) => new Date(row.lastSyncAt).toLocaleString(),
+        },
+        {
+          key: "successRate",
+          label: "Success Rate",
+          render: (row) => `${row.successRate}%`,
+        },
       ]}
-      implementationPlan={[
-        "Create integration registry with secure credential storage.",
-        "Implement connector jobs and event/webhook processing.",
-        "Add sync logs, retries, and alerting for failed operations.",
-        "Provide API keys management with role-based permission checks.",
-      ]}
+      emptyTitle="No integrations configured"
+      emptyMessage="Integration connectors will appear once registry records are provisioned."
     />
   );
 }

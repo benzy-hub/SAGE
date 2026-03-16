@@ -1,22 +1,49 @@
-import { AdminPageComingSoon } from "@/components/dashboard/admin/admin-page-coming-soon";
+"use client";
+
+import { AdminDataView } from "@/components/dashboard/admin/admin-data-view";
+import { useAdminSupport } from "@/hooks/use-admin";
+
+interface SupportRow {
+  id: string;
+  issue: string;
+  priority: string;
+  owner: string;
+  email: string;
+  details?: string;
+  openedAt: string;
+  status: string;
+}
 
 export default function AdminSupportPage() {
+  const { data, isLoading, error } = useAdminSupport();
+
   return (
-    <AdminPageComingSoon
+    <AdminDataView<SupportRow>
       title="Support & Escalations"
-      summary="Operate a structured support desk for account issues, advisor escalations, and incident response with clear ownership and SLAs."
-      outcomes={[
-        "Unified queue for platform issues, advisor requests, and student blockers.",
-        "Priority, SLA, and assignment workflows for support operations.",
-        "Escalation paths with history, notes, and ownership transitions.",
-        "Knowledge base links to reduce repetitive support volume.",
+      summary="Monitor account reviews, Say Hi messages, and motivational quote requests from one support queue."
+      loading={isLoading}
+      error={error instanceof Error ? error.message : undefined}
+      metrics={data?.metrics}
+      items={data?.items ?? []}
+      columns={[
+        { key: "issue", label: "Issue", render: (row) => row.issue },
+        { key: "priority", label: "Priority", render: (row) => row.priority },
+        { key: "owner", label: "Owner", render: (row) => row.owner },
+        { key: "email", label: "Email", render: (row) => row.email },
+        {
+          key: "details",
+          label: "Details",
+          render: (row) => row.details ?? "—",
+        },
+        { key: "status", label: "Status", render: (row) => row.status },
+        {
+          key: "openedAt",
+          label: "Opened",
+          render: (row) => new Date(row.openedAt).toLocaleString(),
+        },
       ]}
-      implementationPlan={[
-        "Create ticket model with priority, status, and assignment controls.",
-        "Build triage board views and escalation workflows.",
-        "Implement SLA timers and breach alerts for critical tickets.",
-        "Integrate support analytics and article recommendation engine.",
-      ]}
+      emptyTitle="No support items"
+      emptyMessage="Support queue items appear when users need review or when visitors submit Say Hi messages and quote requests."
     />
   );
 }

@@ -19,6 +19,7 @@ export function VerifyPinForm() {
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
   const [pin, setPin] = useState("");
   const [attemptsRemaining, setAttemptsRemaining] = useState(5);
 
@@ -47,6 +48,11 @@ export function VerifyPinForm() {
         if (data.attemptsRemaining !== undefined) {
           setAttemptsRemaining(data.attemptsRemaining);
         }
+        return;
+      }
+
+      if (data.pendingApproval) {
+        setPendingApproval(true);
         return;
       }
 
@@ -88,6 +94,31 @@ export function VerifyPinForm() {
       setIsResending(false);
     }
   };
+
+  if (pendingApproval) {
+    return (
+      <div className="text-center space-y-4 py-4">
+        <div className="flex justify-center">
+          <CheckCircle2 className="w-16 h-16 text-amber-500" />
+        </div>
+        <h2 className="text-2xl font-bold">Email Verified!</h2>
+        <p className="text-muted-foreground">
+          Your advisor account is now <strong>pending admin approval</strong>.
+          You&apos;ll receive an email once your account is activated.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Already approved?{" "}
+          <button
+            type="button"
+            onClick={() => router.push("/auth/login")}
+            className="text-foreground hover:text-primary underline underline-offset-4 font-medium"
+          >
+            Sign in
+          </button>
+        </p>
+      </div>
+    );
+  }
 
   if (success) {
     return (

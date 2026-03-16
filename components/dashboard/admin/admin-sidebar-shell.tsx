@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Users,
   UserCheck,
+  GraduationCap,
+  School,
   CalendarCheck,
   BarChart3,
   Settings,
@@ -34,6 +37,12 @@ interface AdminSidebarShellProps {
 
 const navItems = [
   { href: "/dashboard/admin", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/admin/colleges", label: "Colleges", icon: School },
+  {
+    href: "/dashboard/admin/students",
+    label: "Students",
+    icon: GraduationCap,
+  },
   { href: "/dashboard/admin/users", label: "Users", icon: Users },
   {
     href: "/dashboard/admin/departments",
@@ -74,10 +83,10 @@ const mobileBottomNav = [
     icon: LayoutDashboard,
   },
   {
-    href: "/dashboard/admin/users",
-    label: "Users",
-    shortLabel: "Users",
-    icon: Users,
+    href: "/dashboard/admin/students",
+    label: "Students",
+    shortLabel: "Students",
+    icon: GraduationCap,
   },
   {
     href: "/dashboard/admin/reports",
@@ -116,8 +125,11 @@ export function AdminSidebarShell({
     setIsLoggingOut(true);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
+      toast.success("Signed out successfully");
       router.replace("/auth/login");
       router.refresh();
+    } catch {
+      toast.error("Failed to sign out");
     } finally {
       setIsLoggingOut(false);
     }
@@ -128,11 +140,8 @@ export function AdminSidebarShell({
       className="min-h-dvh bg-background"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 5rem)" }}
     >
-      <header
-        className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-foreground/10"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
-      >
-        <div className="w-full max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 lg:h-20 flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-40 p-2 sm:p-3">
+        <div className="w-full max-w-9xl mx-auto rounded-2xl border border-border/50 bg-background/80 shadow-lg shadow-black/5 backdrop-blur-2xl px-4 sm:px-6 lg:px-8 h-14 sm:h-16 lg:h-20 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -147,7 +156,11 @@ export function AdminSidebarShell({
               )}
             </button>
 
-            <Link href="/dashboard/admin" className="flex items-center gap-2">
+            <Link
+              href="/dashboard/admin"
+              className="flex items-center gap-2"
+              data-tour="top-brand"
+            >
               <span className="inline-flex w-9 h-9 rounded-lg bg-foreground text-background items-center justify-center font-bold">
                 S
               </span>
@@ -225,10 +238,12 @@ export function AdminSidebarShell({
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.href;
+                const tourKey = item.href.split("/").pop() || "overview";
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
+                    data-tour={`admin-nav-${tourKey}`}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 transition-all ${
                       active
                         ? "border-foreground bg-foreground text-background"
@@ -275,10 +290,12 @@ export function AdminSidebarShell({
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.href;
+                const tourKey = item.href.split("/").pop() || "overview";
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
+                    data-tour={`admin-nav-${tourKey}`}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 transition-all ${
                       active
                         ? "border-foreground bg-foreground text-background"

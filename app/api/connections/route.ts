@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Types } from "mongoose";
 import {
+  AccountStatus,
   AdvisorStudentConnection,
   ConnectionStatus,
   Role,
@@ -55,9 +56,11 @@ export async function GET(req: NextRequest) {
             status: ConnectionStatus.PENDING,
             requestedBy: { $ne: currentUser._id },
           }).select("_id advisorId"),
-          User.find({ role: Role.ADVISOR, isEmailVerified: true }).select(
-            "_id firstName lastName email role",
-          ),
+          User.find({
+            role: Role.ADVISOR,
+            isEmailVerified: true,
+            status: AccountStatus.ACTIVE,
+          }).select("_id firstName lastName email role"),
         ]);
 
       const advisorIds = Array.from(
@@ -262,7 +265,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const targetUser = await User.findById(targetId).select("_id role");
+    const targetUser = await User.findById(targetId).select(
+      "_id role status isEmailVerified",
+    );
     if (
       !targetUser ||
       targetUser._id.toString() === currentUser._id.toString()
@@ -274,6 +279,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Connections must be between advisor and student" },
         { status: 400 },
+      );
+    }
+
+    if (
+      targetUser.status !== AccountStatus.ACTIVE ||
+      !targetUser.isEmailVerified
+    ) {
+      return NextResponse.json(
+        { error: "Target account is not available for connections" },
+        { status: 409 },
       );
     }
 

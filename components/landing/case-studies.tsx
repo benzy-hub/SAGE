@@ -6,22 +6,25 @@ import { ArrowUpRight } from "lucide-react";
 
 const caseStudies = [
   {
+    slug: "client-engagement-platform",
     title: "Client Engagement Platform",
     description:
       "For a large organization, we implemented a comprehensive engagement system that resulted in a 40% increase in client satisfaction and improved retention rates.",
-    link: "#",
+    link: "/case-studies/client-engagement-platform",
   },
   {
+    slug: "progress-tracking-system",
     title: "Progress Tracking System",
     description:
       "For a growing organization, we deployed real-time progress tracking that helped advisors identify clients needing support early, resulting in a 25% improvement in success rates.",
-    link: "#",
+    link: "/case-studies/progress-tracking-system",
   },
   {
+    slug: "multi-location-coordination",
     title: "Multi-Location Coordination",
     description:
       "For a multi-location organization, we created a unified advising platform that streamlined communication across departments and improved advisor productivity by 35%.",
-    link: "#",
+    link: "/case-studies/multi-location-coordination",
   },
 ];
 

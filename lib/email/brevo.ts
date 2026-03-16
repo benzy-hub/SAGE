@@ -1,24 +1,11 @@
 // lib/email/brevo.ts
-import nodemailer from "nodemailer";
+// Uses Brevo's transactional email REST API (v3).
+// Requires only BREVO_API_KEY and BREVO_FROM_EMAIL in .env.local
 
 const apiKey = process.env.BREVO_API_KEY;
-const fromEmail = process.env.BREVO_FROM_EMAIL || "louisdiaz43@gmail.com";
-const fromName = "SAGE";
-
-if (!apiKey) {
-  throw new Error("BREVO_API_KEY is not defined in environment variables");
-}
-
-// Brevo SMTP configuration
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: fromEmail,
-    pass: apiKey,
-  },
-});
+const fromEmail = process.env.BREVO_FROM_EMAIL || process.env.SMTP_FROM_EMAIL;
+const fromName = process.env.BREVO_FROM_NAME || "SAGE";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sageadvisor.app";
 
 // ─────────────────────────────────────────────
 // Email Templates
@@ -55,7 +42,7 @@ interface SendPasswordResetSuccessParams {
 }
 
 // ─────────────────────────────────────────────
-// Core Send Function
+// Core Send Function — Brevo REST API
 // ─────────────────────────────────────────────
 
 export async function sendEmail({
@@ -64,21 +51,49 @@ export async function sendEmail({
   html,
   text,
 }: SendEmailParams): Promise<boolean> {
-  try {
-    const info = await transporter.sendMail({
-      from: `${fromName} <${fromEmail}>`,
-      to,
-      subject,
-      html,
-      text: text || html.replace(/<[^>]*>/g, ""),
-    });
-
-    console.log("[Brevo] Email sent successfully:", info.messageId);
-    return true;
-  } catch (error) {
-    console.error("[Brevo] Failed to send email:", error);
-    throw error;
+  const recipient = String(to ?? "").trim();
+  if (!recipient.includes("@")) {
+    throw new Error("Invalid recipient email address");
   }
+
+  if (!apiKey) {
+    throw new Error("BREVO_API_KEY is not set in environment variables.");
+  }
+  if (!fromEmail) {
+    throw new Error(
+      "BREVO_FROM_EMAIL (or SMTP_FROM_EMAIL) is not set in environment variables.",
+    );
+  }
+
+  const payload = {
+    sender: { name: fromName, email: fromEmail },
+    to: [{ email: recipient }],
+    subject,
+    htmlContent: html,
+    textContent: text || html.replace(/<[^>]*>/g, ""),
+  };
+
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": apiKey,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => "(no body)");
+    const err = new Error(
+      `[Brevo] API error ${res.status}: ${errBody}`,
+    );
+    console.error("[Brevo] Failed to send email:", err.message);
+    throw err;
+  }
+
+  const data = (await res.json()) as { messageId?: string };
+  console.log("[Brevo] Email sent successfully:", data.messageId ?? "(no id)");
+  return true;
 }
 
 // ─────────────────────────────────────────────
@@ -287,7 +302,7 @@ export async function sendPasswordResetSuccessEmail({
             <div class="success-badge">✓ Your password has been successfully changed</div>
             <p>You can now log in to your SAGE account with your new password.</p>
             <div style="text-align: center;">
-              <a href="https://sageadvisor.app/auth/login" class="button">Back to Login</a>
+              <a href="${appUrl}/auth/login" class="button">Back to Login</a>
             </div>
             <p style="font-size: 12px; color: #666; margin-top: 30px;">
               If you didn't make this change, please contact support immediately.
@@ -344,7 +359,7 @@ export async function sendAccountLockedNotification(
             <p>Your account will be automatically unlocked after <strong>15 minutes</strong>.</p>
             <p>If you need immediate assistance, please contact our support team.</p>
             <div style="text-align: center;">
-              <a href="https://sageadvisor.app/support" class="button">Contact Support</a>
+              <a href="${appUrl}/dashboard" class="button">Contact Support</a>
             </div>
             <p style="font-size: 12px; color: #666; margin-top: 30px;">
               If you didn't attempt to log in, please reset your password immediately to secure your account.

@@ -8,31 +8,37 @@ import Image from "next/image";
 const features = [
   {
     title: "Smart\nScheduling",
+    slug: "smart-scheduling",
     image: "/serviceimgone.svg",
     variant: "gray" as const, // Light gray background
   },
   {
     title: "Secure\nMessaging",
+    slug: "secure-messaging",
     image: "/serviceimgtwo.svg",
     variant: "primary" as const, // Primary blue background
   },
   {
     title: "Client\nManagement",
+    slug: "client-management",
     image: "/serviceimgthree.svg",
     variant: "dark" as const, // Dark/black background
   },
   {
     title: "Session\nNotes",
+    slug: "session-notes",
     image: "/serviceimgfour.svg",
     variant: "gray" as const, // Light gray background
   },
   {
     title: "Analytics &\nReports",
+    slug: "analytics-reports",
     image: "/serviceimgfive.svg",
     variant: "primary" as const, // Primary blue background
   },
   {
     title: "Resource\nLibrary",
+    slug: "resource-library",
     image: "/serviceimgsix.svg",
     variant: "dark" as const, // Dark/black background
   },
@@ -106,7 +112,7 @@ export function Features() {
 
                       {/* Learn More Link */}
                       <Link
-                        href="#"
+                        href={`/features/${feature.slug}`}
                         className={`inline-flex items-center gap-3 text-sm sm:text-base font-medium group/link ${styles.text}`}
                       >
                         <span

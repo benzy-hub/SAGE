@@ -102,9 +102,9 @@ export function Footer() {
                 Contact us:
               </h3>
               <div className="space-y-1.5 text-sm text-background/70">
-                <p>Email: support@sage.edu</p>
-                <p>Phone: +1 (555) 123-4567</p>
-                <p>Address: 123 Academic Drive, University Town, ST 12345</p>
+                <p>Email: info@bowenuniversity.edu.ng</p>
+                <p>Phone: 123456789</p>
+                <p>Address: Iwo Road, Iwo, Osun State, Nigeria</p>
               </div>
             </div>
 
@@ -130,7 +130,8 @@ export function Footer() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs sm:text-sm text-background/50">
-              © {new Date().getFullYear()} SAGE. All Rights Reserved.
+              © {new Date().getFullYear()} SAGE – Bowen University. All Rights
+              Reserved.
             </p>
             <Link
               href="/privacy"

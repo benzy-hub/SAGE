@@ -33,10 +33,10 @@ export const signupSchema = z
         "Password must contain at least one special character",
       ),
     confirmPassword: z.string(),
-    role: z.enum(["STUDENT", "ADVISOR"], {
-      message: "Please select a valid role",
+    role: z.enum(["ADVISOR"], {
+      message: "Only advisor accounts can be self-registered",
     }),
-    agreeToTerms: z.boolean().refine((val) => val === true, {
+    agreeToTerms: z.boolean().optional().default(true).refine((val) => val === true, {
       message: "You must agree to the terms and conditions",
     }),
   })

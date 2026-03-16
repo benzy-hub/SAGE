@@ -75,6 +75,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Check account status
+    if (user.status === AccountStatus.PENDING_APPROVAL) {
+      return NextResponse.json(
+        {
+          error:
+            "Your advisor account is pending admin approval. You will be notified by email once approved.",
+          pendingApproval: true,
+        },
+        { status: 403 },
+      );
+    }
+
     if (user.status !== AccountStatus.ACTIVE) {
       return NextResponse.json(
         { error: "Your account is not active. Please contact support." },

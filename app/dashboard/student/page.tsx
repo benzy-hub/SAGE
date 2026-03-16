@@ -2,7 +2,30 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/db";
-import { AccountStatus, Role, User, initializeModels } from "@/lib/db/models";
+import {
+  AccountStatus,
+  Appointment,
+  AppointmentStatus,
+  AdvisorStudentConnection,
+  ConnectionStatus,
+  Role,
+  StudentProfile,
+  User,
+  initializeModels,
+} from "@/lib/db/models";
+
+function getSessionCountdownLabel(dateValue: Date): string {
+  const diffMs = dateValue.getTime() - Date.now();
+  if (diffMs <= 0) return "Starting soon";
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  if (diffMinutes < 60) return `In ${diffMinutes} min`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24)
+    return `In ${diffHours} hour${diffHours === 1 ? "" : "s"}`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "Tomorrow";
+  return `In ${diffDays} days`;
+}
 
 export default async function StudentDashboardPage() {
   await connectDB();
@@ -15,10 +38,49 @@ export default async function StudentDashboardPage() {
   if (!user) redirect("/auth/login");
   if (user.role !== Role.STUDENT) redirect("/dashboard");
 
-  const [activeAdvisors, activeStudents] = await Promise.all([
+  const [
+    activeAdvisors,
+    activeStudents,
+    profile,
+    upcomingAppointments,
+    connectedAdvisors,
+  ] = await Promise.all([
     User.countDocuments({ role: Role.ADVISOR, status: AccountStatus.ACTIVE }),
     User.countDocuments({ role: Role.STUDENT, status: AccountStatus.ACTIVE }),
+    StudentProfile.findOne({ userId: user._id }).select(
+      "studentId college department program level year",
+    ),
+    Appointment.countDocuments({
+      studentId: user._id,
+      status: {
+        $in: [AppointmentStatus.REQUESTED, AppointmentStatus.CONFIRMED],
+      },
+      scheduledFor: { $gt: new Date() },
+    }),
+    AdvisorStudentConnection.countDocuments({
+      studentId: user._id,
+      status: ConnectionStatus.ACCEPTED,
+    }),
   ]);
+
+  const nextAppointment = await Appointment.findOne({
+    studentId: user._id,
+    status: { $in: [AppointmentStatus.REQUESTED, AppointmentStatus.CONFIRMED] },
+    scheduledFor: { $gt: new Date() },
+  })
+    .sort({ scheduledFor: 1 })
+    .populate("advisorId", "_id firstName lastName")
+    .select("advisorId scheduledFor status agenda")
+    .lean();
+
+  const nextAdvisor =
+    nextAppointment && typeof nextAppointment.advisorId === "object"
+      ? (nextAppointment.advisorId as unknown as {
+          _id: string;
+          firstName: string;
+          lastName: string;
+        })
+      : null;
 
   const studentQuickLinks = [
     {
@@ -56,20 +118,83 @@ export default async function StudentDashboardPage() {
             <p className="text-3xl font-bold mt-2">{activeAdvisors}</p>
           </div>
           <div className="bg-background border-2 border-foreground rounded-2xl p-5">
-            <p className="text-sm text-muted-foreground">Active students</p>
-            <p className="text-3xl font-bold mt-2">{activeStudents}</p>
+            <p className="text-sm text-muted-foreground">My advisors</p>
+            <p className="text-3xl font-bold mt-2">{connectedAdvisors}</p>
           </div>
           <div className="bg-background border-2 border-foreground rounded-2xl p-5">
-            <p className="text-sm text-muted-foreground">Account status</p>
-            <p className="text-3xl font-bold mt-2">{user.status}</p>
+            <p className="text-sm text-muted-foreground">Upcoming sessions</p>
+            <p className="text-3xl font-bold mt-2">{upcomingAppointments}</p>
+            {upcomingAppointments > 0 ? (
+              <Link
+                href="/dashboard/student/appointments"
+                className="text-xs text-primary font-medium hover:underline mt-1 block"
+              >
+                View appointments →
+              </Link>
+            ) : null}
           </div>
           <div className="bg-background border-2 border-foreground rounded-2xl p-5">
-            <p className="text-sm text-muted-foreground">Member since</p>
+            <p className="text-sm text-muted-foreground">Matric number</p>
             <p className="text-xl font-bold mt-2">
-              {new Date(user.createdAt).toLocaleDateString()}
+              {profile?.studentId ?? "—"}
             </p>
           </div>
         </div>
+
+        {nextAppointment ? (
+          <div className="mt-4 rounded-2xl border-2 border-primary/30 bg-primary/5 p-4 sm:p-5">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-primary font-semibold">
+                  Next advising reminder ·{" "}
+                  {getSessionCountdownLabel(
+                    new Date(nextAppointment.scheduledFor),
+                  )}
+                </p>
+                <p className="mt-1 text-sm text-foreground">
+                  {nextAdvisor
+                    ? `Session with ${nextAdvisor.firstName} ${nextAdvisor.lastName}`
+                    : "Session with your advisor"}{" "}
+                  on {new Date(nextAppointment.scheduledFor).toLocaleString()}.
+                </p>
+                {nextAppointment.agenda ? (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Agenda: {nextAppointment.agenda}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href="/dashboard/student/appointments"
+                  className="inline-flex items-center rounded-lg border border-foreground/20 bg-background px-3 py-2 text-sm font-medium hover:bg-secondary"
+                >
+                  Open appointments
+                </Link>
+                {nextAdvisor ? (
+                  <Link
+                    href={`/dashboard/student/messages?contactId=${encodeURIComponent(nextAdvisor._id)}`}
+                    className="inline-flex items-center rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-background hover:bg-primary"
+                  >
+                    Message advisor
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 rounded-2xl border-2 border-dashed border-foreground/20 bg-background p-4 sm:p-5">
+            <p className="text-sm text-muted-foreground">
+              You have no upcoming sessions. Book one now to keep your progress
+              on track.
+            </p>
+            <Link
+              href="/dashboard/student/appointments"
+              className="mt-2 inline-flex text-sm font-medium text-primary hover:underline"
+            >
+              Book an appointment →
+            </Link>
+          </div>
+        )}
 
         <div className="mt-5 grid xl:grid-cols-[1.2fr_0.8fr] gap-4 sm:gap-5">
           <div className="bg-background border-2 border-foreground rounded-2xl p-5 sm:p-6">
@@ -110,6 +235,21 @@ export default async function StudentDashboardPage() {
               {user.firstName} {user.lastName}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+            <div className="mt-4 space-y-1 text-sm">
+              <p className="text-muted-foreground">
+                <span className="font-medium text-foreground">College:</span>{" "}
+                {profile?.college ?? "Not set"}
+              </p>
+              <p className="text-muted-foreground">
+                <span className="font-medium text-foreground">Department:</span>{" "}
+                {profile?.department ?? "Not set"}
+              </p>
+              <p className="text-muted-foreground">
+                <span className="font-medium text-foreground">Level:</span>{" "}
+                {profile?.level ??
+                  (profile?.year ? `${profile.year * 100}` : "Not set")}
+              </p>
+            </div>
             <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
               Your dashboard keeps planning, support, and advisor communication
               connected so your next move is always visible.
@@ -132,6 +272,7 @@ export default async function StudentDashboardPage() {
             <Link
               key={item.href}
               href={item.href}
+              data-tour={`student-module-${item.href.split("/").pop()}`}
               className="group bg-background border-2 border-foreground rounded-2xl p-5 hover:-translate-y-0.5 transition-all"
             >
               <p className="text-base font-semibold text-foreground">

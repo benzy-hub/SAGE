@@ -1,10 +1,40 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export function LetsMakeItHappen() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+
+  const handleProposal = () => {
+    const trimmedEmail = email.trim();
+    if (trimmedEmail) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
+    }
+
+    window.sessionStorage.setItem(
+      "sage-contact-prefill",
+      JSON.stringify({
+        type: "get-quote",
+        quoteCategory: "discipline",
+        email: trimmedEmail,
+        message: "I would like a motivational quote about staying consistent.",
+      }),
+    );
+    window.dispatchEvent(new Event("sage-prefill-contact"));
+    router.push("/#contact");
+    toast.success("Motivational quote form ready below");
+  };
+
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-secondary">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,19 +47,23 @@ export function LetsMakeItHappen() {
               </h2>
 
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6 sm:mb-8">
-                Contact us today to learn more about how our advising services
-                can help your organization grow and succeed in delivering
-                exceptional guidance and support.
+                Need a quick boost? Drop your email and jump straight to the
+                quote form for a fresh motivational line whenever you need one.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   className="h-12 border-2 border-foreground bg-background focus:border-primary focus:ring-0 text-sm flex-1"
                 />
-                <Button className="h-12 px-6 bg-foreground text-background hover:bg-foreground/90 font-medium text-sm whitespace-nowrap transition-all duration-200">
-                  Get your free proposal
+                <Button
+                  onClick={handleProposal}
+                  className="h-12 px-6 bg-foreground text-background hover:bg-foreground/90 font-medium text-sm whitespace-nowrap transition-all duration-200"
+                >
+                  Get your free quote
                 </Button>
               </div>
             </div>

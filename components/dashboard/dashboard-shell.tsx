@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type {
   DashboardIconKey,
@@ -98,8 +99,11 @@ export function DashboardShell({
     setLoading(true);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
+      toast.success("Signed out successfully");
       router.replace("/auth/login");
       router.refresh();
+    } catch {
+      toast.error("Failed to sign out");
     } finally {
       setLoading(false);
     }
@@ -188,11 +192,8 @@ export function DashboardShell({
       className="min-h-dvh bg-background"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 5rem)" }}
     >
-      <header
-        className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-foreground/10"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
-      >
-        <div className="w-full max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 lg:h-20 flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-40 p-2 sm:p-3">
+        <div className="w-full max-w-9xl mx-auto rounded-2xl border border-border/50 bg-background/80 shadow-lg shadow-black/5 backdrop-blur-2xl px-4 sm:px-6 lg:px-8 h-14 sm:h-16 lg:h-20 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -205,6 +206,7 @@ export function DashboardShell({
 
             <Link
               href={meta.roleHome}
+              data-tour="top-brand"
               className="flex items-center gap-2 group min-w-0"
             >
               <div className="relative w-9 h-9 sm:w-10 sm:h-10 shrink-0">
@@ -233,7 +235,11 @@ export function DashboardShell({
               className="border-2 border-foreground rounded-xl"
               asChild
             >
-              <Link href={messagesHref} className="relative">
+              <Link
+                href={messagesHref}
+                data-tour="nav-messages"
+                className="relative"
+              >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Messages
                 {unreadCount > 0 ? (
@@ -382,6 +388,7 @@ export function DashboardShell({
                   <Link
                     key={item.href}
                     href={item.href}
+                    data-tour={`nav-${item.icon}`}
                     className={`flex items-center justify-between gap-3 px-3 py-3 rounded-2xl border-2 transition-all ${
                       active
                         ? "border-primary bg-primary text-primary-foreground"
@@ -394,21 +401,17 @@ export function DashboardShell({
                         {item.label}
                       </span>
                     </span>
-                    <ArrowRight className="w-4 h-4 shrink-0 opacity-70" />
+                    {item.icon === "messages" && unreadCount > 0 ? (
+                      <span className="inline-flex min-w-5 h-5 px-1 rounded-full bg-destructive text-white text-[10px] items-center justify-center font-bold">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    ) : (
+                      <ArrowRight className="w-4 h-4 shrink-0 opacity-70" />
+                    )}
                   </Link>
                 );
               })}
             </nav>
-
-            <div className="mt-4 bg-background border-2 border-dashed border-foreground/25 rounded-[1.6rem] p-4">
-              <p className="text-sm font-semibold text-foreground">
-                Workspace note
-              </p>
-              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                This workspace is designed to stay in sync with your role,
-                current priorities, and mobile-first workflows.
-              </p>
-            </div>
 
             <Button
               onClick={handleLogout}
@@ -481,6 +484,7 @@ export function DashboardShell({
               <Link
                 key={item.href}
                 href={item.href}
+                data-tour={`nav-${item.icon}`}
                 className="relative flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-h-14"
               >
                 <div

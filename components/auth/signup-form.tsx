@@ -22,14 +22,12 @@ export function SignupForm() {
     email: string;
     password: string;
     confirmPassword: string;
-    role: "STUDENT" | "ADVISOR";
   }>({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "STUDENT",
   });
   const [passwordStrength, setPasswordStrength] = useState(0);
 
@@ -62,7 +60,7 @@ export function SignupForm() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, role: "ADVISOR", agreeToTerms: true }),
       });
 
       const data = await res.json();
@@ -101,10 +99,10 @@ export function SignupForm() {
     <div className="w-full">
       <div className="mb-6 space-y-2">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          Create Your Account
+          Create Advisor Account
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Join SAGE and start your academic journey
+          Register as an academic advisor — your account will be reviewed and activated by an admin before you can sign in.
         </p>
       </div>
 
@@ -164,25 +162,6 @@ export function SignupForm() {
             required
             disabled={isLoading}
           />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="role">I am a...</Label>
-          <select
-            id="role"
-            value={formData.role}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                role: e.target.value as "STUDENT" | "ADVISOR",
-              }))
-            }
-            disabled={isLoading}
-            className="sage-auth-select"
-          >
-            <option value="STUDENT">Student</option>
-            <option value="ADVISOR">Academic Advisor</option>
-          </select>
         </div>
 
         <div className="space-y-2">

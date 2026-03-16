@@ -1,6 +1,7 @@
 "use client";
 
 import { io, type Socket } from "socket.io-client";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Send,
@@ -51,9 +52,11 @@ interface MessagesClientProps {
 }
 
 export function MessagesClient({ role }: MessagesClientProps) {
+  const searchParams = useSearchParams();
   const socketRef = useRef<Socket | null>(null);
   const selectedContactRef = useRef<string>("");
   const loadedConversationForRef = useRef<string>("");
+  const preferredContactId = searchParams?.get("contactId") ?? "";
 
   const [contacts, setContacts] = useState<ChatContact[]>([]);
   const [availableAdvisors, setAvailableAdvisors] = useState<ConnectionUser[]>(
@@ -114,8 +117,16 @@ export function MessagesClient({ role }: MessagesClientProps) {
       const nextContacts = (data?.contacts ?? []) as ChatContact[];
       setContacts(nextContacts);
 
+      const preferredContactExists =
+        preferredContactId.length > 0 &&
+        nextContacts.some((contact) => contact.id === preferredContactId);
+      const nextSelectedContactId = preferredContactExists
+        ? preferredContactId
+        : nextContacts[0]?.id;
+
       if (!selectedContactId && nextContacts.length > 0) {
-        setSelectedContactId(nextContacts[0].id);
+        setSelectedContactId(nextSelectedContactId ?? "");
+        if (preferredContactExists) setMobileView("chat");
       }
 
       if (
@@ -123,7 +134,8 @@ export function MessagesClient({ role }: MessagesClientProps) {
         nextContacts.length > 0 &&
         !nextContacts.some((contact) => contact.id === selectedContactId)
       ) {
-        setSelectedContactId(nextContacts[0].id);
+        setSelectedContactId(nextSelectedContactId ?? "");
+        if (preferredContactExists) setMobileView("chat");
       }
     } catch {
       setError("Failed to load chat contacts.");
@@ -242,6 +254,14 @@ export function MessagesClient({ role }: MessagesClientProps) {
       loadedConversationForRef.current !== selectedContactId,
     );
   }, [selectedContactId]);
+
+  useEffect(() => {
+    if (!preferredContactId || contacts.length === 0) return;
+    if (!contacts.some((contact) => contact.id === preferredContactId)) return;
+
+    setSelectedContactId(preferredContactId);
+    setMobileView("chat");
+  }, [contacts, preferredContactId]);
 
   useEffect(() => {
     if (!currentUserId) return;
