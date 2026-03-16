@@ -69,7 +69,10 @@ export async function POST(req: NextRequest) {
       allColleges.map((c) => [c.name.toLowerCase(), c]),
     );
     const deptMap = new Map(
-      allDepartments.map((d) => [`${d.college.toLowerCase()}||${d.name.toLowerCase()}`, d]),
+      allDepartments.map((d) => [
+        `${d.college.toLowerCase()}||${d.name.toLowerCase()}`,
+        d,
+      ]),
     );
 
     const results: BulkStudentResult[] = [];
@@ -79,9 +82,13 @@ export async function POST(req: NextRequest) {
 
       const firstName = String(raw?.firstName ?? "").trim();
       const lastName = String(raw?.lastName ?? "").trim();
-      const email = String(raw?.email ?? "").trim().toLowerCase();
+      const email = String(raw?.email ?? "")
+        .trim()
+        .toLowerCase();
       const password = String(raw?.password ?? "").trim();
-      const studentId = String(raw?.studentId ?? "").trim().toUpperCase();
+      const studentId = String(raw?.studentId ?? "")
+        .trim()
+        .toUpperCase();
       const college = String(raw?.college ?? "").trim();
       const department = String(raw?.department ?? "").trim();
       const program = String(raw?.program ?? department).trim();
@@ -90,43 +97,93 @@ export async function POST(req: NextRequest) {
 
       // --- field validation ---
       if (!firstName || !lastName) {
-        results.push({ index: i, email, studentId, success: false, error: "First and last name are required" });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: "First and last name are required",
+        });
         continue;
       }
       if (!email || !email.includes("@")) {
-        results.push({ index: i, email, studentId, success: false, error: "Valid email is required" });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: "Valid email is required",
+        });
         continue;
       }
       if (!password || password.length < 8) {
-        results.push({ index: i, email, studentId, success: false, error: "Password must be at least 8 characters" });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: "Password must be at least 8 characters",
+        });
         continue;
       }
       if (!studentId) {
-        results.push({ index: i, email, studentId, success: false, error: "Student ID (matric) is required" });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: "Student ID (matric) is required",
+        });
         continue;
       }
       if (!college || !department || !level) {
-        results.push({ index: i, email, studentId, success: false, error: "College, department, and level are required" });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: "College, department, and level are required",
+        });
         continue;
       }
 
       // --- catalog validation ---
       const collegeRecord = collegeMap.get(college.toLowerCase());
       if (!collegeRecord) {
-        results.push({ index: i, email, studentId, success: false, error: `Invalid college: ${college}` });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: `Invalid college: ${college}`,
+        });
         continue;
       }
 
-      const deptRecord = deptMap.get(`${college.toLowerCase()}||${department.toLowerCase()}`);
+      const deptRecord = deptMap.get(
+        `${college.toLowerCase()}||${department.toLowerCase()}`,
+      );
       if (!deptRecord) {
-        results.push({ index: i, email, studentId, success: false, error: `Invalid department "${department}" for college "${college}"` });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: `Invalid department "${department}" for college "${college}"`,
+        });
         continue;
       }
 
       const allowedLevels =
         deptRecord.levels.length > 0 ? deptRecord.levels : collegeRecord.levels;
       if (allowedLevels.length > 0 && !allowedLevels.includes(level)) {
-        results.push({ index: i, email, studentId, success: false, error: `Invalid level "${level}" for department "${department}"` });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: `Invalid level "${level}" for department "${department}"`,
+        });
         continue;
       }
 
@@ -137,11 +194,23 @@ export async function POST(req: NextRequest) {
       ]);
 
       if (existingEmail) {
-        results.push({ index: i, email, studentId, success: false, error: "Email already exists" });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: "Email already exists",
+        });
         continue;
       }
       if (existingMatric) {
-        results.push({ index: i, email, studentId, success: false, error: "Matric (student ID) already exists" });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: "Matric (student ID) already exists",
+        });
         continue;
       }
 
@@ -177,7 +246,13 @@ export async function POST(req: NextRequest) {
         });
       } catch (createErr) {
         console.error(`[Bulk Students] Row ${i} create error:`, createErr);
-        results.push({ index: i, email, studentId, success: false, error: "Failed to create record" });
+        results.push({
+          index: i,
+          email,
+          studentId,
+          success: false,
+          error: "Failed to create record",
+        });
       }
     }
 
@@ -196,9 +271,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("[Admin Students Bulk POST]", error);
-    return NextResponse.json(
-      { error: "Bulk import failed" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Bulk import failed" }, { status: 500 });
   }
 }

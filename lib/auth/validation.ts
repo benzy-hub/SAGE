@@ -36,9 +36,13 @@ export const signupSchema = z
     role: z.enum(["ADVISOR"], {
       message: "Only advisor accounts can be self-registered",
     }),
-    agreeToTerms: z.boolean().optional().default(true).refine((val) => val === true, {
-      message: "You must agree to the terms and conditions",
-    }),
+    agreeToTerms: z
+      .boolean()
+      .optional()
+      .default(true)
+      .refine((val) => val === true, {
+        message: "You must agree to the terms and conditions",
+      }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",

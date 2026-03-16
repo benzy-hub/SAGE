@@ -60,7 +60,11 @@ export function SignupForm() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, role: "ADVISOR", agreeToTerms: true }),
+        body: JSON.stringify({
+          ...formData,
+          role: "ADVISOR",
+          agreeToTerms: true,
+        }),
       });
 
       const data = await res.json();
@@ -102,7 +106,8 @@ export function SignupForm() {
           Create Advisor Account
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Register as an academic advisor — your account will be reviewed and activated by an admin before you can sign in.
+          Register as an academic advisor — your account will be reviewed and
+          activated by an admin before you can sign in.
         </p>
       </div>
 

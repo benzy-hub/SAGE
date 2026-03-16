@@ -84,9 +84,7 @@ export async function sendEmail({
 
   if (!res.ok) {
     const errBody = await res.text().catch(() => "(no body)");
-    const err = new Error(
-      `[Brevo] API error ${res.status}: ${errBody}`,
-    );
+    const err = new Error(`[Brevo] API error ${res.status}: ${errBody}`);
     console.error("[Brevo] Failed to send email:", err.message);
     throw err;
   }

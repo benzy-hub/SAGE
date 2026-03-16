@@ -21,7 +21,10 @@ import {
   useBulkCreateStudents,
   useUpdateStudent,
 } from "@/hooks/use-admin";
-import type { AdminBulkStudentRow, AdminBulkStudentResult } from "@/lib/admin/types";
+import type {
+  AdminBulkStudentRow,
+  AdminBulkStudentResult,
+} from "@/lib/admin/types";
 
 interface StudentRow {
   id: string;
@@ -94,7 +97,9 @@ export default function AdminStudentsPage() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkCsv, setBulkCsv] = useState("");
   const [bulkPreview, setBulkPreview] = useState<AdminBulkStudentRow[]>([]);
-  const [bulkResults, setBulkResults] = useState<AdminBulkStudentResult[] | null>(null);
+  const [bulkResults, setBulkResults] = useState<
+    AdminBulkStudentResult[] | null
+  >(null);
   const [bulkParseError, setBulkParseError] = useState<string | null>(null);
 
   const parseBulkCsv = (raw: string) => {
@@ -102,7 +107,9 @@ export default function AdminStudentsPage() {
     setBulkPreview([]);
     const lines = raw.trim().split(/\r?\n/).filter(Boolean);
     if (lines.length < 2) {
-      setBulkParseError("Paste a CSV with a header row and at least one data row.");
+      setBulkParseError(
+        "Paste a CSV with a header row and at least one data row.",
+      );
       return;
     }
     const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
@@ -111,7 +118,9 @@ export default function AdminStudentsPage() {
       const cells = lines[i].split(",").map((c) => c.trim());
       if (cells.every((c) => c === "")) continue;
       const row: Record<string, string> = {};
-      header.forEach((key, idx) => { row[key] = cells[idx] ?? ""; });
+      header.forEach((key, idx) => {
+        row[key] = cells[idx] ?? "";
+      });
       rows.push({
         firstName: row.firstname ?? row.first_name ?? "",
         lastName: row.lastname ?? row.last_name ?? "",
@@ -568,11 +577,14 @@ export default function AdminStudentsPage() {
                     <DialogDescription>
                       Paste CSV data below. Required columns:{" "}
                       <code className="text-xs bg-muted px-1 rounded">
-                        firstName, lastName, email, password, studentId, college, department, level
+                        firstName, lastName, email, password, studentId,
+                        college, department, level
                       </code>
                       . Optional:{" "}
-                      <code className="text-xs bg-muted px-1 rounded">program, year</code>.
-                      Up to 200 rows per import.
+                      <code className="text-xs bg-muted px-1 rounded">
+                        program, year
+                      </code>
+                      . Up to 200 rows per import.
                     </DialogDescription>
                   </DialogHeader>
 
@@ -590,7 +602,9 @@ export default function AdminStudentsPage() {
                         className="w-full px-3 py-2 rounded-lg border border-foreground/20 bg-background text-xs font-mono resize-y"
                       />
                       {bulkParseError && (
-                        <p className="text-xs text-destructive">{bulkParseError}</p>
+                        <p className="text-xs text-destructive">
+                          {bulkParseError}
+                        </p>
                       )}
                       <Button
                         size="sm"
@@ -604,14 +618,29 @@ export default function AdminStudentsPage() {
                       {bulkPreview.length > 0 && (
                         <>
                           <p className="text-xs text-muted-foreground">
-                            {bulkPreview.length} row{bulkPreview.length !== 1 ? "s" : ""} parsed — review before importing.
+                            {bulkPreview.length} row
+                            {bulkPreview.length !== 1 ? "s" : ""} parsed —
+                            review before importing.
                           </p>
                           <div className="overflow-x-auto max-h-56 border rounded-lg">
                             <table className="w-full text-xs">
                               <thead className="sticky top-0 bg-muted">
                                 <tr>
-                                  {["#","Name","Email","Matric","College","Dept","Level"].map((h) => (
-                                    <th key={h} className="px-2 py-1 text-left font-medium">{h}</th>
+                                  {[
+                                    "#",
+                                    "Name",
+                                    "Email",
+                                    "Matric",
+                                    "College",
+                                    "Dept",
+                                    "Level",
+                                  ].map((h) => (
+                                    <th
+                                      key={h}
+                                      className="px-2 py-1 text-left font-medium"
+                                    >
+                                      {h}
+                                    </th>
                                   ))}
                                 </tr>
                               </thead>
@@ -619,11 +648,17 @@ export default function AdminStudentsPage() {
                                 {bulkPreview.map((row, idx) => (
                                   <tr key={idx} className="border-t">
                                     <td className="px-2 py-1">{idx + 1}</td>
-                                    <td className="px-2 py-1">{row.firstName} {row.lastName}</td>
+                                    <td className="px-2 py-1">
+                                      {row.firstName} {row.lastName}
+                                    </td>
                                     <td className="px-2 py-1">{row.email}</td>
-                                    <td className="px-2 py-1">{row.studentId}</td>
+                                    <td className="px-2 py-1">
+                                      {row.studentId}
+                                    </td>
                                     <td className="px-2 py-1">{row.college}</td>
-                                    <td className="px-2 py-1">{row.department}</td>
+                                    <td className="px-2 py-1">
+                                      {row.department}
+                                    </td>
                                     <td className="px-2 py-1">{row.level}</td>
                                   </tr>
                                 ))}
@@ -636,9 +671,15 @@ export default function AdminStudentsPage() {
                   ) : (
                     <div className="space-y-3">
                       <div className="flex gap-4 text-sm">
-                        <span className="text-green-600 font-medium">✓ {bulkResults.filter((r) => r.success).length} created</span>
+                        <span className="text-green-600 font-medium">
+                          ✓ {bulkResults.filter((r) => r.success).length}{" "}
+                          created
+                        </span>
                         {bulkResults.some((r) => !r.success) && (
-                          <span className="text-destructive font-medium">✗ {bulkResults.filter((r) => !r.success).length} failed</span>
+                          <span className="text-destructive font-medium">
+                            ✗ {bulkResults.filter((r) => !r.success).length}{" "}
+                            failed
+                          </span>
                         )}
                       </div>
                       {bulkResults.some((r) => !r.success) && (
@@ -646,20 +687,31 @@ export default function AdminStudentsPage() {
                           <table className="w-full text-xs">
                             <thead className="sticky top-0 bg-muted">
                               <tr>
-                                {["Row","Email","Matric","Error"].map((h) => (
-                                  <th key={h} className="px-2 py-1 text-left font-medium">{h}</th>
-                                ))}
+                                {["Row", "Email", "Matric", "Error"].map(
+                                  (h) => (
+                                    <th
+                                      key={h}
+                                      className="px-2 py-1 text-left font-medium"
+                                    >
+                                      {h}
+                                    </th>
+                                  ),
+                                )}
                               </tr>
                             </thead>
                             <tbody>
-                              {bulkResults.filter((r) => !r.success).map((r) => (
-                                <tr key={r.index} className="border-t">
-                                  <td className="px-2 py-1">{r.index + 1}</td>
-                                  <td className="px-2 py-1">{r.email}</td>
-                                  <td className="px-2 py-1">{r.studentId}</td>
-                                  <td className="px-2 py-1 text-destructive">{r.error}</td>
-                                </tr>
-                              ))}
+                              {bulkResults
+                                .filter((r) => !r.success)
+                                .map((r) => (
+                                  <tr key={r.index} className="border-t">
+                                    <td className="px-2 py-1">{r.index + 1}</td>
+                                    <td className="px-2 py-1">{r.email}</td>
+                                    <td className="px-2 py-1">{r.studentId}</td>
+                                    <td className="px-2 py-1 text-destructive">
+                                      {r.error}
+                                    </td>
+                                  </tr>
+                                ))}
                             </tbody>
                           </table>
                         </div>
@@ -671,7 +723,8 @@ export default function AdminStudentsPage() {
                     {!bulkResults ? (
                       <Button
                         disabled={
-                          bulkPreview.length === 0 || bulkCreateStudents.isPending
+                          bulkPreview.length === 0 ||
+                          bulkCreateStudents.isPending
                         }
                         onClick={() => {
                           bulkCreateStudents.mutate(bulkPreview, {

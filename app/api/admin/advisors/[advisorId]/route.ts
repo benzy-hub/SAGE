@@ -92,7 +92,10 @@ export async function PATCH(
           text: `Hi ${advisor.firstName}, your SAGE advisor account has been approved. Sign in at ${appUrl}/auth/login`,
         });
       } catch (emailErr) {
-        console.error("[Advisor Approve] Failed to send approval email:", emailErr);
+        console.error(
+          "[Advisor Approve] Failed to send approval email:",
+          emailErr,
+        );
       }
     }
 

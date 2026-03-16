@@ -281,9 +281,13 @@ export function useBulkCreateStudents() {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "overview"] });
       if (data.failed === 0) {
-        toast.success(`${data.created} student${data.created !== 1 ? "s" : ""} imported successfully`);
+        toast.success(
+          `${data.created} student${data.created !== 1 ? "s" : ""} imported successfully`,
+        );
       } else {
-        toast.warning(`${data.created} imported, ${data.failed} failed — check the results`);
+        toast.warning(
+          `${data.created} imported, ${data.failed} failed — check the results`,
+        );
       }
     },
     onError: (error: Error) => toast.error(error.message),
