@@ -1054,6 +1054,7 @@ function parseEnv(filePath) {
       phone: "123456789",
       budget: "₦2M - ₦5M",
       isRead: false,
+      status: "OPEN",
       createdAt: new Date(now - 7 * day),
       updatedAt: new Date(now - 7 * day),
     },
@@ -1064,8 +1065,20 @@ function parseEnv(filePath) {
         "I would like to know whether SAGE supports advisor availability, student ratings, and institution-wide reporting.",
       type: "say-hi",
       isRead: false,
+      status: "OPEN",
       createdAt: new Date(now - 3 * day),
       updatedAt: new Date(now - 3 * day),
+    },
+    {
+      name: "Student Affairs Office",
+      email: "studentaffairs@bowen-demo.edu.ng",
+      message:
+        "Please confirm the turnaround time for support escalations and whether we can assign internal owners to each request.",
+      type: "say-hi",
+      isRead: true,
+      status: "REVIEWED",
+      createdAt: new Date(now - 2 * day),
+      updatedAt: new Date(now - 2 * day),
     },
   ]);
 

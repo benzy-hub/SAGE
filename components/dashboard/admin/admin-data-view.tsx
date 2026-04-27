@@ -72,22 +72,22 @@ export function AdminDataView<T>({
 
   return (
     <section className="bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 lg:p-8">
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 sm:gap-6">
-        <div>
+      <div className="grid xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)] gap-4 sm:gap-6 xl:items-start">
+        <div className="min-w-0">
           <div className="sage-section-chip self-start inline-flex">
             <span className="text-xl sm:text-2xl font-medium text-primary-foreground">
               {title}
             </span>
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground mt-3 max-w-3xl leading-relaxed">
+          <p className="text-sm sm:text-base text-muted-foreground mt-3 max-w-4xl leading-relaxed">
             {summary}
           </p>
         </div>
-        {actions ? <div className="w-full lg:w-auto">{actions}</div> : null}
+        {actions ? <div className="w-full xl:min-w-[360px]">{actions}</div> : null}
       </div>
 
       {metrics ? (
-        <div className="mt-6 grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="mt-6 grid sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
           {Object.entries(metrics).map(([key, value]) => (
             <article
               key={key}
@@ -124,7 +124,7 @@ export function AdminDataView<T>({
             <p className="text-sm text-muted-foreground mt-1">{emptyMessage}</p>
           </div>
         ) : (
-          <table className="w-full min-w-215">
+          <table className="w-full min-w-[980px] xl:min-w-full">
             <thead>
               <tr className="border-b border-foreground/10">
                 {showRowNumber ? (

@@ -46,7 +46,6 @@ export async function GET(req: NextRequest) {
       }),
       User.find({})
         .sort({ createdAt: -1 })
-        .limit(8)
         .select("firstName lastName email role status createdAt"),
     ]);
 

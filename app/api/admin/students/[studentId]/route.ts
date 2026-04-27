@@ -113,10 +113,9 @@ export async function PATCH(
       );
     }
 
-    const allowedLevels =
-      departmentRecord.levels.length > 0
-        ? departmentRecord.levels
-        : collegeRecord.levels;
+    const allowedLevels = Array.isArray(departmentRecord.levels)
+      ? departmentRecord.levels
+      : [];
 
     if (allowedLevels.length > 0 && !allowedLevels.includes(level)) {
       return NextResponse.json(

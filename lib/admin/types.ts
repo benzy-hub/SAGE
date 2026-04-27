@@ -183,13 +183,8 @@ export interface AdminIntegrationItem {
   id: string;
   name: string;
   status: string;
-  lastSyncAt: string;
-  successRate: number;
-}
-
-export interface AdminIntegrationsResponse {
-  metrics: AdminMetricMap;
-  items: AdminIntegrationItem[];
+  note: string;
+  successRate?: number;
 }
 
 export interface AdminAuditItem {
@@ -230,6 +225,7 @@ export interface AdminSettingsItem {
   defaultStudentYear: number;
   maxMessageLength: number;
   notifyAdminsOnNewUser: boolean;
+  integrations: AdminIntegrationItem[];
   updatedAt: string;
 }
 
@@ -312,7 +308,6 @@ export interface AdminBulkCreateStudentsResponse {
 export interface AdminCreateCollegeInput {
   name: string;
   code: string;
-  levels: string[];
 }
 
 export interface AdminCreateDepartmentInput {

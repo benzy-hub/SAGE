@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  MessageSquare,
+  TrendingUp,
+} from "lucide-react";
 import { connectDB } from "@/lib/db";
 import {
   AccountStatus,
@@ -38,30 +45,24 @@ export default async function StudentDashboardPage() {
   if (!user) redirect("/auth/login");
   if (user.role !== Role.STUDENT) redirect("/dashboard");
 
-  const [
-    activeAdvisors,
-    activeStudents,
-    profile,
-    upcomingAppointments,
-    connectedAdvisors,
-  ] = await Promise.all([
-    User.countDocuments({ role: Role.ADVISOR, status: AccountStatus.ACTIVE }),
-    User.countDocuments({ role: Role.STUDENT, status: AccountStatus.ACTIVE }),
-    StudentProfile.findOne({ userId: user._id }).select(
-      "studentId college department program level year",
-    ),
-    Appointment.countDocuments({
-      studentId: user._id,
-      status: {
-        $in: [AppointmentStatus.REQUESTED, AppointmentStatus.CONFIRMED],
-      },
-      scheduledFor: { $gt: new Date() },
-    }),
-    AdvisorStudentConnection.countDocuments({
-      studentId: user._id,
-      status: ConnectionStatus.ACCEPTED,
-    }),
-  ]);
+  const [activeAdvisors, profile, upcomingAppointments, connectedAdvisors] =
+    await Promise.all([
+      User.countDocuments({ role: Role.ADVISOR, status: AccountStatus.ACTIVE }),
+      StudentProfile.findOne({ userId: user._id }).select(
+        "studentId college department program level year",
+      ),
+      Appointment.countDocuments({
+        studentId: user._id,
+        status: {
+          $in: [AppointmentStatus.REQUESTED, AppointmentStatus.CONFIRMED],
+        },
+        scheduledFor: { $gt: new Date() },
+      }),
+      AdvisorStudentConnection.countDocuments({
+        studentId: user._id,
+        status: ConnectionStatus.ACCEPTED,
+      }),
+    ]);
 
   const nextAppointment = await Appointment.findOne({
     studentId: user._id,
@@ -101,16 +102,97 @@ export default async function StudentDashboardPage() {
         "See milestones, next steps, and the areas that need attention first.",
       href: "/dashboard/student/progress",
     },
-    {
-      title: "Explore resources",
-      summary:
-        "Find support services and guidance that fit your current needs.",
-      href: "/dashboard/student/resources",
-    },
   ];
 
   return (
     <>
+      <section className="bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 lg:p-8 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+        <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5">
+          <div className="max-w-3xl">
+            <div className="sage-section-chip inline-flex">
+              <span className="inline-flex items-center gap-2 text-xl sm:text-2xl font-medium text-primary-foreground">
+                <BookOpen className="w-5 h-5" />
+                Student Command Center
+              </span>
+            </div>
+            <h1 className="mt-4 text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+              Keep your academic plan, sessions, and progress aligned in one
+              calm workspace.
+            </h1>
+            <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
+              This dashboard keeps planning, support, and advisor communication
+              connected so your next move is always visible and easy to act on.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-background px-3 py-1.5 text-xs font-medium text-foreground">
+                <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                Mobile friendly
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-background px-3 py-1.5 text-xs font-medium text-foreground">
+                <CalendarDays className="w-3.5 h-3.5 text-primary" />
+                Appointment ready
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-background px-3 py-1.5 text-xs font-medium text-foreground">
+                <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                Progress tracked
+              </span>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-3 xl:grid-cols-1 gap-3 w-full xl:w-[20rem]">
+            <article className="rounded-2xl border-2 border-foreground/15 bg-background p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Active advisors
+              </p>
+              <p className="text-2xl font-bold text-foreground mt-2">
+                {activeAdvisors}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Available across the platform
+              </p>
+            </article>
+            <article className="rounded-2xl border-2 border-foreground/15 bg-background p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                My advisors
+              </p>
+              <p className="text-2xl font-bold text-foreground mt-2">
+                {connectedAdvisors}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Directly connected to you
+              </p>
+            </article>
+            <article className="rounded-2xl border-2 border-foreground/15 bg-background p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Upcoming sessions
+              </p>
+              <p className="text-2xl font-bold text-foreground mt-2">
+                {upcomingAppointments}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Booked or awaiting confirmation
+              </p>
+            </article>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            href="/dashboard/student/appointments"
+            className="inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-colors hover:bg-primary"
+          >
+            Manage appointments
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/dashboard/student/academic-plan"
+            className="inline-flex items-center gap-2 rounded-xl border border-foreground/15 bg-background px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            Review academic plan
+          </Link>
+        </div>
+      </section>
+
       <section className="bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 lg:p-8">
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
           <div className="bg-background border-2 border-foreground rounded-2xl p-5">
@@ -273,7 +355,7 @@ export default async function StudentDashboardPage() {
               key={item.href}
               href={item.href}
               data-tour={`student-module-${item.href.split("/").pop()}`}
-              className="group bg-background border-2 border-foreground rounded-2xl p-5 hover:-translate-y-0.5 transition-all"
+              className="group bg-background border-2 border-foreground rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-lg transition-all"
             >
               <p className="text-base font-semibold text-foreground">
                 {item.title}
@@ -281,8 +363,9 @@ export default async function StudentDashboardPage() {
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
                 {item.summary}
               </p>
-              <p className="mt-4 text-sm font-medium text-foreground group-hover:text-primary">
+              <p className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-foreground group-hover:text-primary">
                 Open module
+                <ArrowRight className="w-4 h-4" />
               </p>
             </Link>
           ))}

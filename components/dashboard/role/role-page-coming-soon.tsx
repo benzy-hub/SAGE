@@ -15,15 +15,26 @@ export function RolePageComingSoon({
 }: RolePageComingSoonProps) {
   return (
     <section className="bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 lg:p-8">
-      <div className="flex flex-col lg:flex-row lg:items-start gap-4 sm:gap-6">
-        <div className="sage-section-chip self-start">
-          <span className="text-xl sm:text-2xl font-medium text-primary-foreground">
-            {title}
-          </span>
+      <div className="grid xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] gap-4 sm:gap-6 xl:items-start">
+        <div className="min-w-0">
+          <div className="sage-section-chip self-start inline-flex">
+            <span className="text-xl sm:text-2xl font-medium text-primary-foreground">
+              {title}
+            </span>
+          </div>
+          <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-4xl leading-relaxed">
+            {summary}
+          </p>
         </div>
-        <p className="text-sm sm:text-base text-muted-foreground max-w-3xl leading-relaxed">
-          {summary}
-        </p>
+        <div className="rounded-2xl border border-foreground/10 bg-background p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+            Experience Goal
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            The structure is designed to feel calm on mobile and substantial on
+            desktop so future features land into a stronger layout by default.
+          </p>
+        </div>
       </div>
 
       <div className="mt-6 grid xl:grid-cols-2 gap-5 sm:gap-6">

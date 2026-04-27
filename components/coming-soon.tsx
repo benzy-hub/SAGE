@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Home, ArrowLeft, Bell, Clock, Sparkles } from "lucide-react";
+import { Home, ArrowLeft } from "lucide-react";
 
 interface ComingSoonProps {
   title?: string;

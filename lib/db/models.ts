@@ -845,6 +845,9 @@ export interface IContactSubmission extends Document {
   organization?: string;
   phone?: string;
   budget?: string;
+  status?: "OPEN" | "REVIEWED" | "RESOLVED" | "ESCALATED";
+  resolutionNote?: string;
+  resolvedAt?: Date;
   isRead: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -872,6 +875,13 @@ const contactSubmissionSchema = new Schema<IContactSubmission>(
     organization: { type: String, trim: true, maxlength: 200 },
     phone: { type: String, trim: true, maxlength: 30 },
     budget: { type: String, trim: true, maxlength: 100 },
+    status: {
+      type: String,
+      enum: ["OPEN", "REVIEWED", "RESOLVED", "ESCALATED"],
+      default: "OPEN",
+    },
+    resolutionNote: { type: String, trim: true, maxlength: 3000 },
+    resolvedAt: { type: Date },
     isRead: { type: Boolean, default: false, index: true },
   },
   { timestamps: true },

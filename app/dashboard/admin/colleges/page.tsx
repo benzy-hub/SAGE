@@ -25,8 +25,6 @@ interface CollegeRow {
   code: string;
   studentCount: number;
   departmentCount: number;
-  levels: string[];
-  avgYear: number;
   managed?: boolean;
 }
 
@@ -36,26 +34,15 @@ export default function AdminCollegesPage() {
   const updateCollege = useUpdateCollege();
   const deleteCollege = useDeleteCollege();
   const [search, setSearch] = useState("");
-  const [level, setLevel] = useState("ALL");
   const [createOpen, setCreateOpen] = useState(false);
   const [editingCollege, setEditingCollege] = useState<CollegeRow | null>(null);
   const [deletingCollege, setDeletingCollege] = useState<CollegeRow | null>(
     null,
   );
-  const [editingLevelsText, setEditingLevelsText] = useState("");
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  const [levels, setLevels] = useState("");
 
   const items = useMemo(() => data?.items ?? [], [data?.items]);
-
-  const levelOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(items.flatMap((item) => item.levels).filter((value) => value)),
-      ).sort(),
-    [items],
-  );
 
   const filteredItems = useMemo(() => {
     const normalized = search.trim().toLowerCase();
@@ -64,10 +51,9 @@ export default function AdminCollegesPage() {
         normalized.length === 0 ||
         item.name.toLowerCase().includes(normalized) ||
         item.code.toLowerCase().includes(normalized);
-      const matchesLevel = level === "ALL" || item.levels.includes(level);
-      return matchesSearch && matchesLevel;
+      return matchesSearch;
     });
-  }, [items, search, level]);
+  }, [items, search]);
 
   const filteredMetrics = useMemo(() => {
     const totalStudents = filteredItems.reduce(
@@ -114,16 +100,6 @@ export default function AdminCollegesPage() {
             render: (row) => row.departmentCount,
           },
           {
-            key: "levels",
-            label: "Levels",
-            render: (row) => (row.levels.length ? row.levels.join(", ") : "—"),
-          },
-          {
-            key: "avgYear",
-            label: "Average Year",
-            render: (row) => row.avgYear,
-          },
-          {
             key: "actions",
             label: "Actions",
             render: (row) => (
@@ -137,12 +113,10 @@ export default function AdminCollegesPage() {
                       createCollege.mutate({
                         name: row.name,
                         code: row.code,
-                        levels: row.levels,
                       });
                       return;
                     }
                     setEditingCollege(row);
-                    setEditingLevelsText(row.levels.join(", "));
                   }}
                 >
                   {row.managed ? "Edit" : "Enable CRUD"}
@@ -172,18 +146,6 @@ export default function AdminCollegesPage() {
               placeholder="Search college or code"
               className="w-full h-10 px-3 rounded-lg border border-foreground/20 bg-background text-sm"
             />
-            <select
-              value={level}
-              onChange={(event) => setLevel(event.target.value)}
-              className="h-10 w-full px-3 rounded-lg border border-foreground/20 bg-background text-sm"
-            >
-              <option value="ALL">All levels</option>
-              {levelOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
             <div
               className="pt-2 border-t border-foreground/10"
               data-tour="admin-colleges-create"
@@ -216,12 +178,6 @@ export default function AdminCollegesPage() {
                       placeholder="Code"
                       className="w-full h-10 px-3 rounded-lg border border-foreground/20 bg-background text-sm"
                     />
-                    <input
-                      value={levels}
-                      onChange={(event) => setLevels(event.target.value)}
-                      placeholder="Levels (comma separated)"
-                      className="w-full h-10 px-3 rounded-lg border border-foreground/20 bg-background text-sm"
-                    />
                   </div>
                   <DialogFooter>
                     <Button
@@ -233,16 +189,11 @@ export default function AdminCollegesPage() {
                           {
                             name: name.trim(),
                             code: code.trim(),
-                            levels: levels
-                              .split(",")
-                              .map((entry) => entry.trim())
-                              .filter(Boolean),
                           },
                           {
                             onSuccess: () => {
                               setName("");
                               setCode("");
-                              setLevels("");
                               setCreateOpen(false);
                             },
                           },
@@ -264,7 +215,6 @@ export default function AdminCollegesPage() {
         onOpenChange={(open) => {
           if (!open) {
             setEditingCollege(null);
-            setEditingLevelsText("");
           }
         }}
       >
@@ -297,11 +247,6 @@ export default function AdminCollegesPage() {
                 }
                 className="w-full h-10 px-3 rounded-lg border border-foreground/20 bg-background text-sm"
               />
-              <input
-                value={editingLevelsText}
-                onChange={(event) => setEditingLevelsText(event.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-foreground/20 bg-background text-sm"
-              />
             </div>
           ) : null}
           <DialogFooter>
@@ -314,15 +259,10 @@ export default function AdminCollegesPage() {
                     id: editingCollege.id,
                     name: editingCollege.name.trim(),
                     code: editingCollege.code.trim(),
-                    levels: editingLevelsText
-                      .split(",")
-                      .map((entry) => entry.trim())
-                      .filter(Boolean),
                   },
                   {
                     onSuccess: () => {
                       setEditingCollege(null);
-                      setEditingLevelsText("");
                     },
                   },
                 );

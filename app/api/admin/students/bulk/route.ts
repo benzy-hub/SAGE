@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     // Pre-load all colleges and departments for validation (avoid N+1)
     const [allColleges, allDepartments] = await Promise.all([
-      CollegeCatalog.find({}).select("name levels"),
+      CollegeCatalog.find({}).select("name"),
       DepartmentCatalog.find({}).select("college name levels"),
     ]);
 
@@ -174,8 +174,9 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const allowedLevels =
-        deptRecord.levels.length > 0 ? deptRecord.levels : collegeRecord.levels;
+      const allowedLevels = Array.isArray(deptRecord.levels)
+        ? deptRecord.levels
+        : [];
       if (allowedLevels.length > 0 && !allowedLevels.includes(level)) {
         results.push({
           index: i,

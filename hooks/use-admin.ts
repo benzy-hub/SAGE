@@ -15,7 +15,6 @@ import type {
   AdminAuditResponse,
   AdminCollegesResponse,
   AdminDepartmentsResponse,
-  AdminIntegrationsResponse,
   AdminNotificationDispatchResponse,
   AdminNotificationsResponse,
   AdminOverviewResponse,
@@ -120,14 +119,6 @@ export function useAdminReports() {
   return useQuery({
     queryKey: ["admin", "reports"],
     queryFn: () => apiRequest<AdminReportsResponse>("/api/admin/reports"),
-  });
-}
-
-export function useAdminIntegrations() {
-  return useQuery({
-    queryKey: ["admin", "integrations"],
-    queryFn: () =>
-      apiRequest<AdminIntegrationsResponse>("/api/admin/integrations"),
   });
 }
 
@@ -374,12 +365,7 @@ export function useCreateCollege() {
 export function useUpdateCollege() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: {
-      id: string;
-      name: string;
-      code: string;
-      levels: string[];
-    }) =>
+    mutationFn: async (input: { id: string; name: string; code: string }) =>
       apiRequest<AdminMutationResponse>("/api/admin/colleges", {
         method: "PATCH",
         body: JSON.stringify(input),

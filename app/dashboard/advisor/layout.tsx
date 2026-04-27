@@ -30,9 +30,10 @@ export default async function AdvisorLayout({
       navItems={advisorNavItems}
       mobileNavItems={[
         advisorNavItems[0],
+        advisorNavItems[1],
         advisorNavItems[2],
+        advisorNavItems[4],
         advisorNavItems[5],
-        advisorNavItems[6],
       ]}
       currentUser={{
         id: user._id.toString(),

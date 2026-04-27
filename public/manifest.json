@@ -1,0 +1,20 @@
+{
+  "name": "SAGE",
+  "short_name": "SAGE",
+  "description": "SAGE is a professional academic advising platform connecting students and advisors.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
+  "lang": "en-US",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}
