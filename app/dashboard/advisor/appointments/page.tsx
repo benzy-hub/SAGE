@@ -370,7 +370,7 @@ export default function AdvisorAppointmentsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-background border-2 border-foreground rounded-xl p-1 w-fit overflow-x-auto">
+      <div className="flex flex-col sm:flex-row gap-1 bg-background border-2 border-foreground rounded-xl p-1 w-full sm:w-fit overflow-x-auto">
         {(
           [
             { key: "appointments", label: "Sessions", icon: Calendar },
@@ -381,7 +381,7 @@ export default function AdvisorAppointmentsPage() {
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+            className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-1 sm:flex-none ${
               activeTab === key
                 ? "bg-foreground text-background"
                 : "text-muted-foreground hover:text-foreground"
