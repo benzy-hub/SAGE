@@ -20,7 +20,6 @@ import {
   PanelLeftClose,
   Building2,
   Bell,
-  Plug,
   LifeBuoy,
   X,
 } from "lucide-react";
@@ -61,11 +60,6 @@ const navItems = [
     icon: Bell,
   },
   { href: "/dashboard/admin/reports", label: "Reports", icon: BarChart3 },
-  {
-    href: "/dashboard/admin/integrations",
-    label: "Integrations",
-    icon: Plug,
-  },
   { href: "/dashboard/admin/audit-log", label: "Audit Log", icon: Shield },
   {
     href: "/dashboard/admin/support",
@@ -89,11 +83,18 @@ const mobileBottomNav = [
     icon: GraduationCap,
   },
   {
-    href: "/dashboard/admin/reports",
-    label: "Reports",
-    shortLabel: "Reports",
-    icon: BarChart3,
+    href: "/dashboard/admin/appointments",
+    label: "Appointments",
+    shortLabel: "Schedule",
+    icon: CalendarCheck,
   },
+  {
+    href: "/dashboard/admin/support",
+    label: "Support",
+    shortLabel: "Support",
+    icon: LifeBuoy,
+  },
+
   {
     href: "/dashboard/admin/settings",
     label: "Settings",
@@ -141,7 +142,7 @@ export function AdminSidebarShell({
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 5rem)" }}
     >
       <header className="sticky top-0 z-40 p-2 sm:p-3">
-        <div className="w-full max-w-9xl mx-auto rounded-2xl border border-border/50 bg-background/80 shadow-lg shadow-black/5 backdrop-blur-2xl px-4 sm:px-6 lg:px-8 h-14 sm:h-16 lg:h-20 flex items-center justify-between gap-3">
+        <div className="w-full max-w-450 mx-auto rounded-2xl border border-border/50 bg-background/95 shadow-lg shadow-black/5 backdrop-blur-xl px-4 sm:px-6 lg:px-8 xl:px-10 h-14 sm:h-16 lg:h-20 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -270,9 +271,9 @@ export function AdminSidebarShell({
         </div>
       )}
 
-      <div className="w-full max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <div className="grid lg:grid-cols-[320px_minmax(0,1fr)] gap-5 lg:gap-8 min-h-[calc(100vh-8rem)]">
-          <aside className="hidden lg:flex flex-col bg-secondary border-2 border-foreground rounded-[1.6rem] p-5 h-[calc(100vh-8.5rem)] sticky top-24 overflow-y-auto scrollbar-none">
+      <div className="w-full max-w-450 mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 lg:py-8">
+        <div className="grid lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)] gap-5 lg:gap-8 xl:gap-10 min-h-[calc(100vh-8rem)] items-start">
+          <aside className="hidden lg:flex flex-col bg-secondary/95 border-2 border-foreground rounded-[1.8rem] p-5 xl:p-6 h-[calc(100vh-8.5rem)] sticky top-24 overflow-y-auto scrollbar-none shadow-[0_24px_60px_rgba(15,23,42,0.06)]">
             <div className="bg-background border-2 border-foreground rounded-2xl p-4 mb-4">
               <p className="text-xs text-muted-foreground">Signed in as</p>
               <p className="text-base font-semibold text-foreground mt-1">
@@ -320,7 +321,7 @@ export function AdminSidebarShell({
             </Button>
           </aside>
 
-          <main className="space-y-6 min-w-0">{children}</main>
+          <main className="space-y-6 xl:space-y-8 min-w-0">{children}</main>
         </div>
       </div>
 
@@ -329,7 +330,7 @@ export function AdminSidebarShell({
         className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-background/98 backdrop-blur-xl border-t border-foreground/10 no-select"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="grid grid-cols-4 px-1 py-1">
+        <div className="grid grid-cols-5 px-1 py-1">
           {mobileBottomNav.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href;

@@ -93,7 +93,7 @@ export default function AdvisorAdviseesPage() {
         </div>
       ) : null}
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
         <article className="bg-background border-2 border-foreground rounded-xl p-3">
           <p className="text-xs uppercase text-muted-foreground">Advisees</p>
           <p className="text-2xl font-bold mt-1">
@@ -124,7 +124,7 @@ export default function AdvisorAdviseesPage() {
         </article>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border-2 border-foreground bg-background">
+      <div className="overflow-x-auto rounded-2xl border-2 border-foreground bg-background shadow-[0_18px_40px_rgba(15,23,42,0.04)]">
         {loading ? (
           <div className="p-6 text-sm text-muted-foreground">
             Loading advisees...
@@ -134,7 +134,7 @@ export default function AdvisorAdviseesPage() {
             No advisees found.
           </div>
         ) : (
-          <table className="w-full min-w-210">
+          <table className="w-full min-w-[980px] xl:min-w-full">
             <thead>
               <tr className="border-b border-foreground/10">
                 <th className="px-4 py-3 text-left text-xs uppercase text-muted-foreground">

@@ -54,7 +54,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         {children}
-        <Toaster position="top-center" />
+        <Toaster position="bottom-right" />
       </QueryClientProvider>
     </ThemeProvider>
   );

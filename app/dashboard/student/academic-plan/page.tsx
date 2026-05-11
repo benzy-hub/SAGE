@@ -250,11 +250,12 @@ export default function StudentAcademicPlanPage() {
         </article>
       </div>
 
-      <div className="rounded-2xl border-2 border-foreground bg-background p-4 space-y-3">
-        <p className="text-sm font-semibold text-foreground">
-          {editingId ? "Edit custom plan item" : "Create custom plan item"}
-        </p>
-        <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-4">
+        <div className="rounded-2xl border-2 border-foreground bg-background p-4 space-y-3">
+          <p className="text-sm font-semibold text-foreground">
+            {editingId ? "Edit custom plan item" : "Create custom plan item"}
+          </p>
+          <div className="grid md:grid-cols-2 gap-3">
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -284,15 +285,15 @@ export default function StudentAcademicPlanPage() {
             <option value="IN_PROGRESS">IN PROGRESS</option>
             <option value="DONE">DONE</option>
           </select>
-        </div>
-        <textarea
+          </div>
+          <textarea
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           rows={3}
           placeholder="Notes, blockers, required documents, or advisor follow-up"
           className="w-full rounded-lg border border-foreground/20 bg-background px-3 py-2 text-sm resize-none"
-        />
-        <div className="flex flex-wrap gap-2">
+          />
+          <div className="flex flex-wrap gap-2">
           <button
             type="button"
             disabled={saving || !title.trim() || !term.trim()}
@@ -311,11 +312,12 @@ export default function StudentAcademicPlanPage() {
               Cancel edit
             </button>
           ) : null}
+          </div>
         </div>
-      </div>
 
-      {data?.profile ? (
-        <div className="rounded-2xl border-2 border-foreground bg-background p-4 text-sm text-foreground grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        <div className="space-y-4">
+          {data?.profile ? (
+            <div className="rounded-2xl border-2 border-foreground bg-background p-4 text-sm text-foreground grid sm:grid-cols-2 gap-2">
           <p>
             <span className="text-muted-foreground">Matric:</span>{" "}
             {data.profile.studentId}
@@ -340,16 +342,18 @@ export default function StudentAcademicPlanPage() {
             <span className="text-muted-foreground">Year:</span>{" "}
             {data.profile.year}
           </p>
-        </div>
-      ) : null}
+            </div>
+          ) : null}
 
-      <div className="rounded-2xl border-2 border-foreground bg-background p-4">
-        <p className="text-sm font-semibold text-foreground">Smart guidance</p>
-        <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground list-disc list-inside">
-          {(data?.recommendations ?? []).map((tip) => (
-            <li key={tip}>{tip}</li>
-          ))}
-        </ul>
+          <div className="rounded-2xl border-2 border-foreground bg-background p-4">
+            <p className="text-sm font-semibold text-foreground">Smart guidance</p>
+            <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground list-disc list-inside">
+              {(data?.recommendations ?? []).map((tip) => (
+                <li key={tip}>{tip}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
 
       <div className="rounded-2xl border-2 border-foreground bg-background divide-y divide-foreground/10">

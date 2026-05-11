@@ -11,6 +11,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  applicationName: "SAGE",
+  manifest: "/manifest.json",
   title: "SAGE - Student Advising & Guidance Environment",
   description:
     "SAGE is a professional, web-based academic advising platform designed to connect students with advisors, streamline appointments, and enhance academic success.",

@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
         .sort({ createdAt: -1 })
         .limit(20)
         .select(
-          "name email type message quoteCategory quoteText emailDelivered isRead createdAt",
+          "name email type message quoteCategory quoteText emailDelivered isRead status createdAt",
         )
         .lean(),
       User.countDocuments({ role: Role.STUDENT }),
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
           ? `Theme: ${quoteTheme}. Email delivered: ${submission.emailDelivered ? "Yes" : "No"}. ${submission.quoteText ? `Quote: ${submission.quoteText}` : submission.message}`
           : submission.message,
         openedAt: submission.createdAt,
-        status: submission.isRead ? "REVIEWED" : "OPEN",
+        status: submission.status ?? (submission.isRead ? "REVIEWED" : "OPEN"),
       };
     });
 
@@ -82,7 +82,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         metrics: {
-          openTickets: tickets.length,
+          openTickets: tickets.filter((ticket) => ticket.status !== "RESOLVED")
+            .length,
           highPriority: tickets.filter((ticket) => ticket.priority === "HIGH")
             .length,
           mediumPriority: tickets.filter(

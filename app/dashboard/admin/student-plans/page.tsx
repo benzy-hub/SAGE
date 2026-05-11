@@ -142,7 +142,7 @@ export default function AdminStudentPlansPage() {
               <p className="text-sm font-semibold mt-1">
                 {data.student.firstName} {data.student.lastName}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-1 break-all">
                 {data.student.email}
               </p>
             </article>

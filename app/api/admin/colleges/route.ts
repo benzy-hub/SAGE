@@ -27,14 +27,17 @@ export async function GET(req: NextRequest) {
             _id: "$college",
             studentCount: { $sum: 1 },
             departments: { $addToSet: "$department" },
-            levels: { $addToSet: "$level" },
             avgYear: { $avg: "$year" },
           },
         },
         { $sort: { studentCount: -1 } },
       ]),
-      CollegeCatalog.find({}).sort({ name: 1 }).select("name code levels"),
+      CollegeCatalog.find({}).sort({ name: 1 }).select("name code"),
     ]);
+
+    const departmentEntries = await DepartmentCatalog.find({}).select(
+      "college levels",
+    );
 
     const groupedMap = new Map(
       grouped
@@ -60,22 +63,15 @@ export async function GET(req: NextRequest) {
         const groupedRow = groupedMap.get(name);
         const catalog = catalogEntries.find((entry) => entry.name === name);
 
-        const levelsFromProfiles = Array.isArray(groupedRow?.levels)
-          ? groupedRow.levels
-              .filter((item: unknown) => typeof item === "string")
-              .map((item: string) => item.trim())
-              .filter((item: string) => item.length > 0)
-          : [];
-
-        const levelsFromCatalog = Array.isArray(catalog?.levels)
-          ? catalog.levels
+        const levels = Array.from(
+          new Set(
+            departmentEntries
+              .filter((entry) => entry.college === name)
+              .flatMap((entry) => entry.levels ?? [])
               .filter((item) => typeof item === "string")
               .map((item) => item.trim())
-              .filter((item) => item.length > 0)
-          : [];
-
-        const levels = Array.from(
-          new Set([...levelsFromCatalog, ...levelsFromProfiles]),
+              .filter((item) => item.length > 0),
+          ),
         ).sort();
 
         const departments = Array.isArray(groupedRow?.departments)
@@ -133,15 +129,6 @@ export async function POST(req: NextRequest) {
     const code = String(body?.code ?? "")
       .trim()
       .toUpperCase();
-    const levels: string[] = Array.isArray(body?.levels)
-      ? body.levels
-          .filter((value: unknown) => typeof value === "string")
-          .map((value: string) => value.trim())
-          .filter((value: string) => value.length > 0)
-      : [];
-    const normalizedLevels: string[] = Array.from(
-      new Set<string>(levels),
-    ).sort();
 
     if (!name || !code) {
       return NextResponse.json(
@@ -163,7 +150,6 @@ export async function POST(req: NextRequest) {
     const created = await CollegeCatalog.create({
       name,
       code,
-      levels: normalizedLevels,
     });
 
     return NextResponse.json(
@@ -173,7 +159,6 @@ export async function POST(req: NextRequest) {
           id: created._id.toString(),
           name: created.name,
           code: created.code,
-          levels: created.levels,
         },
       },
       { status: 201 },
@@ -198,15 +183,6 @@ export async function PATCH(req: NextRequest) {
     const code = String(body?.code ?? "")
       .trim()
       .toUpperCase();
-    const levels: string[] = Array.isArray(body?.levels)
-      ? body.levels
-          .filter((value: unknown) => typeof value === "string")
-          .map((value: string) => value.trim())
-          .filter((value: string) => value.length > 0)
-      : [];
-    const normalizedLevels: string[] = Array.from(
-      new Set<string>(levels),
-    ).sort();
 
     if (!id || !name || !code) {
       return NextResponse.json(
@@ -235,7 +211,6 @@ export async function PATCH(req: NextRequest) {
 
     current.name = name;
     current.code = code;
-    current.levels = normalizedLevels;
     await current.save();
 
     if (previousName !== name) {
@@ -258,7 +233,6 @@ export async function PATCH(req: NextRequest) {
           id: current._id.toString(),
           name: current.name,
           code: current.code,
-          levels: current.levels,
         },
       },
       { status: 200 },

@@ -5,8 +5,7 @@ export type DashboardIconKey =
   | "book"
   | "chart"
   | "messages"
-  | "settings"
-  | "sparkles";
+  | "settings";
 
 export interface DashboardNavItem {
   href: string;
@@ -84,12 +83,6 @@ export const studentNavItems: DashboardNavItem[] = [
     label: "Progress",
     shortLabel: "Progress",
     icon: "chart",
-  },
-  {
-    href: "/dashboard/student/resources",
-    label: "Resources",
-    shortLabel: "Resources",
-    icon: "sparkles",
   },
   {
     href: "/dashboard/student/messages",

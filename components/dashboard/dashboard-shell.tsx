@@ -22,7 +22,6 @@ import {
   Menu,
   MessageSquare,
   Settings,
-  Sparkles,
   UserRound,
   Users,
   X,
@@ -72,7 +71,6 @@ const navIcons: Record<
   chart: ChartColumn,
   messages: MessageSquare,
   settings: Settings,
-  sparkles: Sparkles,
 };
 
 export function DashboardShell({
@@ -94,7 +92,17 @@ export function DashboardShell({
   const meta = roleMeta[role];
   const Icon = meta.icon;
   const messagesHref = `${meta.roleHome}/messages`;
-
+  const firstName = currentUser.firstName?.trim() || "there";
+  const hours = new Date().getHours();
+  const greeting =
+    hours < 12
+      ? "Good morning"
+      : hours < 17
+        ? "Good afternoon"
+        : "Good evening";
+  const emphasizedMobileIndex = Math.floor(
+    (Math.max(1, mobileNavItems.length) - 1) / 2,
+  );
   const handleLogout = async () => {
     setLoading(true);
     try {
@@ -190,15 +198,15 @@ export function DashboardShell({
   return (
     <div
       className="min-h-dvh bg-background"
-      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 5rem)" }}
+      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 6rem)" }}
     >
       <header className="sticky top-0 z-40 p-2 sm:p-3">
-        <div className="w-full max-w-9xl mx-auto rounded-2xl border border-border/50 bg-background/80 shadow-lg shadow-black/5 backdrop-blur-2xl px-4 sm:px-6 lg:px-8 h-14 sm:h-16 lg:h-20 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="w-full max-w-450 mx-auto rounded-2xl border border-border/60 bg-background/95 px-3 sm:px-4 lg:px-6 xl:px-8 h-14 sm:h-16 lg:h-20 flex items-center justify-between gap-3 shadow-lg shadow-black/5 backdrop-blur-xl supports-backdrop-filter:bg-background/80">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               aria-label="Open dashboard navigation"
-              className="lg:hidden p-2 rounded-xl border-2 border-foreground/20 hover:border-foreground hover:bg-foreground/5 transition-colors"
+              className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-foreground/15 bg-background text-foreground transition-colors hover:border-foreground hover:bg-foreground/5"
               onClick={() => setMobileMenuOpen(true)}
             >
               <Menu className="w-5 h-5 text-foreground" />
@@ -218,7 +226,7 @@ export function DashboardShell({
                   priority
                 />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 hidden sm:block">
                 <p className="text-sm font-semibold text-foreground truncate">
                   SAGE
                 </p>
@@ -226,13 +234,27 @@ export function DashboardShell({
                   {meta.badge}
                 </p>
               </div>
+              <div className="min-w-0 sm:hidden">
+                <p className="text-sm font-semibold text-foreground truncate">
+                  SAGE
+                </p>
+              </div>
             </Link>
+
+            <div className="hidden md:flex flex-col min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {greeting}, <span className="text-primary">{firstName}</span> 👋
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {meta.accentLabel}
+              </p>
+            </div>
           </div>
 
           <div className="hidden sm:flex items-center gap-3">
             <Button
               variant="outline"
-              className="border-2 border-foreground rounded-xl"
+              className="border border-foreground/15 rounded-xl bg-background hover:bg-secondary"
               asChild
             >
               <Link
@@ -251,7 +273,7 @@ export function DashboardShell({
             </Button>
             <Button
               variant="outline"
-              className="border-2 border-foreground rounded-xl"
+              className="border border-foreground/15 rounded-xl bg-background hover:bg-secondary"
               asChild
             >
               <Link href="/dashboard">All Dashboards</Link>
@@ -259,10 +281,38 @@ export function DashboardShell({
             <Button
               onClick={handleLogout}
               disabled={loading}
-              className="bg-foreground text-background hover:bg-primary rounded-xl"
+              className="rounded-xl bg-foreground text-background hover:bg-primary"
             >
               <LogOut className="w-4 h-4 mr-2" />
               {loading ? "Signing out..." : "Logout"}
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2 sm:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 w-10 rounded-xl border border-foreground/15 bg-background p-0"
+              asChild
+            >
+              <Link href={messagesHref} aria-label="Open messages">
+                <MessageSquare className="h-4 w-4" />
+                {unreadCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 inline-flex min-w-4 h-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] items-center justify-center font-bold">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                ) : null}
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 w-10 rounded-xl border border-foreground/15 bg-background p-0"
+              onClick={handleLogout}
+              disabled={loading}
+              aria-label="Logout"
+            >
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -358,9 +408,9 @@ export function DashboardShell({
         </div>
       )}
 
-      <div className="w-full max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <div className="grid lg:grid-cols-[300px_minmax(0,1fr)] gap-5 lg:gap-8 min-h-[calc(100vh-8rem)]">
-          <aside className="hidden lg:flex flex-col bg-secondary border-2 border-foreground rounded-[2rem] p-5 h-[calc(100vh-8.5rem)] sticky top-24 overflow-y-auto scrollbar-none">
+      <div className="w-full max-w-450 mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 lg:py-8">
+        <div className="grid lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)] gap-5 lg:gap-8 xl:gap-10 min-h-[calc(100vh-8rem)] items-start">
+          <aside className="hidden lg:flex flex-col bg-secondary/95 border-2 border-foreground rounded-[2rem] p-5 xl:p-6 h-[calc(100vh-8.5rem)] sticky top-24 overflow-y-auto scrollbar-none shadow-[0_24px_60px_rgba(15,23,42,0.06)]">
             <div className="bg-background border-2 border-foreground rounded-[1.6rem] p-4 mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-xl bg-foreground text-background flex items-center justify-center">
@@ -423,7 +473,7 @@ export function DashboardShell({
             </Button>
           </aside>
 
-          <main className="min-w-0 space-y-6">
+          <main className="min-w-0 space-y-6 xl:space-y-8">
             <section className="bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 lg:p-8 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
               <div className="flex flex-col xl:flex-row xl:items-start gap-4 sm:gap-6">
                 <div className="sage-section-chip self-start">
@@ -436,7 +486,7 @@ export function DashboardShell({
                   <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
                     {title}
                   </h1>
-                  <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-3xl leading-relaxed">
+                  <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-4xl leading-relaxed">
                     {description}
                   </p>
                   <p className="text-sm font-medium text-primary mt-3">
@@ -473,37 +523,67 @@ export function DashboardShell({
       </div>
 
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-background/98 backdrop-blur-xl border-t border-foreground/10 no-select"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur-xl supports-backdrop-filter:bg-background/80"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="grid grid-cols-4 px-1 py-1">
-          {mobileNavItems.map((item) => {
+        <div
+          className="grid items-end gap-1 px-2 py-2"
+          style={{
+            gridTemplateColumns: `repeat(${Math.max(1, mobileNavItems.length)}, minmax(0, 1fr))`,
+          }}
+        >
+          {mobileNavItems.map((item, index) => {
             const NavIcon = navIcons[item.icon];
-            const active = pathname === item.href;
+            const active = Boolean(
+              pathname &&
+              (pathname === item.href || pathname.startsWith(`${item.href}/`)),
+            );
+            const emphasized = index === emphasizedMobileIndex;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 data-tour={`nav-${item.icon}`}
-                className="relative flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-h-14"
+                className={
+                  emphasized
+                    ? "relative flex flex-col items-center justify-center gap-0.5 px-1 pb-1 min-h-16"
+                    : "relative flex flex-col items-center justify-center gap-0.5 px-1 py-1.5 min-h-14"
+                }
               >
-                <div
-                  className={`relative flex flex-col items-center justify-center gap-0.5 px-3.5 py-1.5 rounded-2xl transition-all ${
-                    active
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  <NavIcon className="w-5 h-5" />
-                  <span className="text-[10px] font-medium leading-none">
-                    {item.shortLabel}
-                  </span>
-                  {item.icon === "messages" && unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 inline-flex min-w-4 h-4 px-1 rounded-full bg-destructive text-white text-[9px] items-center justify-center font-bold">
-                      {unreadCount > 9 ? "9+" : unreadCount}
+                {emphasized ? (
+                  <div
+                    className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-all ${
+                      active
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                        : "bg-primary/90 text-primary-foreground hover:bg-primary shadow-lg shadow-primary/10"
+                    }`}
+                  >
+                    <NavIcon className="w-5 h-5" />
+                    {item.icon === "messages" && unreadCount > 0 ? (
+                      <span className="absolute -right-1 -top-1 inline-flex min-w-4 h-4 px-1 rounded-full bg-destructive text-white text-[9px] items-center justify-center font-bold">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div
+                    className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all ${
+                      active
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <NavIcon className="w-5 h-5" />
+                    <span className="text-[10px] font-medium leading-none">
+                      {item.shortLabel}
                     </span>
-                  )}
-                </div>
+                    {item.icon === "messages" && unreadCount > 0 ? (
+                      <span className="absolute -top-1 -right-1 inline-flex min-w-4 h-4 px-1 rounded-full bg-destructive text-white text-[9px] items-center justify-center font-bold">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    ) : null}
+                  </div>
+                )}
               </Link>
             );
           })}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { ArrowRight, CalendarDays, MessageSquare, Users } from "lucide-react";
 import { connectDB } from "@/lib/db";
 import {
   AccountStatus,
@@ -40,15 +41,11 @@ export default async function AdvisorDashboardPage() {
 
   const [
     activeStudents,
-    pendingVerification,
-    totalAdvisors,
     adviseeConnections,
     upcomingAppointments,
     pendingAppointmentRequests,
   ] = await Promise.all([
     User.countDocuments({ role: Role.STUDENT, status: AccountStatus.ACTIVE }),
-    User.countDocuments({ status: AccountStatus.PENDING_VERIFICATION }),
-    User.countDocuments({ role: Role.ADVISOR, status: AccountStatus.ACTIVE }),
     AdvisorStudentConnection.find({
       advisorId: user._id,
       status: ConnectionStatus.ACCEPTED,
@@ -168,6 +165,94 @@ export default async function AdvisorDashboardPage() {
 
   return (
     <>
+      <section className="bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 lg:p-8 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+        <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5">
+          <div className="max-w-3xl">
+            <div className="sage-section-chip inline-flex">
+              <span className="inline-flex items-center gap-2 text-xl sm:text-2xl font-medium text-primary-foreground">
+                <Users className="w-5 h-5" />
+                Advisor Command Center
+              </span>
+            </div>
+            <h1 className="mt-4 text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+              Manage students, sessions, and follow-ups with a calm and clear
+              workflow.
+            </h1>
+            <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
+              Your dashboard keeps advising work, scheduled sessions, and
+              student communication aligned so you can move from review to
+              action without friction.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-background px-3 py-1.5 text-xs font-medium text-foreground">
+                <Users className="w-3.5 h-3.5 text-primary" />
+                Follow-up ready
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-background px-3 py-1.5 text-xs font-medium text-foreground">
+                <CalendarDays className="w-3.5 h-3.5 text-primary" />
+                Scheduling ready
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-background px-3 py-1.5 text-xs font-medium text-foreground">
+                <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                Student communication
+              </span>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-3 xl:grid-cols-1 gap-3 w-full xl:w-[20rem]">
+            <article className="rounded-2xl border-2 border-foreground/15 bg-background p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Advisees in view
+              </p>
+              <p className="text-2xl font-bold text-foreground mt-2">
+                {adviseeConnections.length}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Connected students
+              </p>
+            </article>
+            <article className="rounded-2xl border-2 border-foreground/15 bg-background p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Upcoming sessions
+              </p>
+              <p className="text-2xl font-bold text-foreground mt-2">
+                {upcomingAppointments}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Confirmed meetings ahead
+              </p>
+            </article>
+            <article className="rounded-2xl border-2 border-foreground/15 bg-background p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Pending requests
+              </p>
+              <p className="text-2xl font-bold text-foreground mt-2">
+                {pendingAppointmentRequests}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Needs review or action
+              </p>
+            </article>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            href="/dashboard/advisor/appointments"
+            className="inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-colors hover:bg-primary"
+          >
+            Manage sessions
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/dashboard/advisor/messages"
+            className="inline-flex items-center gap-2 rounded-xl border border-foreground/15 bg-background px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            Open messages
+          </Link>
+        </div>
+      </section>
+
       <section className="bg-secondary border-2 border-foreground rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 lg:p-8">
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
           <div className="bg-background border-2 border-foreground rounded-2xl p-5">
@@ -354,8 +439,8 @@ export default async function AdvisorDashboardPage() {
           Advisee profile snapshot
         </h2>
         <p className="text-sm sm:text-base text-muted-foreground mt-1">
-          College, department, level and matric information for your currently
-          accepted advisees.
+          College, department, level, and matric information for your currently
+          accepted advisees, presented in a clean table for fast review.
         </p>
 
         <div

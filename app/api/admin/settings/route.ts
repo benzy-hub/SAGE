@@ -11,6 +11,22 @@ const defaultSettings = {
   defaultStudentYear: 1,
   maxMessageLength: 2000,
   notifyAdminsOnNewUser: true,
+  integrations: [
+    {
+      id: "email-provider",
+      name: "Email provider",
+      status: "CONNECTED",
+      note: "Transactional email delivery is active.",
+      successRate: 99,
+    },
+    {
+      id: "analytics-export",
+      name: "Analytics export",
+      status: "CONNECTED",
+      note: "Usage reporting sync is healthy.",
+      successRate: 97,
+    },
+  ],
 };
 
 export async function GET(req: NextRequest) {
@@ -31,7 +47,8 @@ export async function GET(req: NextRequest) {
         {
           item: {
             key: created.key,
-            ...created.value,
+            ...defaultSettings,
+            ...(created.value ?? {}),
             updatedAt: created.updatedAt,
           },
         },
@@ -43,7 +60,8 @@ export async function GET(req: NextRequest) {
       {
         item: {
           key: existing.key,
-          ...(existing.value ?? defaultSettings),
+          ...defaultSettings,
+          ...(existing.value ?? {}),
           updatedAt: existing.updatedAt,
         },
       },
@@ -72,6 +90,10 @@ export async function PATCH(req: NextRequest) {
       defaultStudentYear: Number(body?.defaultStudentYear ?? 1),
       maxMessageLength: Number(body?.maxMessageLength ?? 2000),
       notifyAdminsOnNewUser: Boolean(body?.notifyAdminsOnNewUser),
+      integrations:
+        Array.isArray(body?.integrations) && body.integrations.length > 0
+          ? body.integrations
+          : defaultSettings.integrations,
     };
 
     if (
@@ -119,7 +141,8 @@ export async function PATCH(req: NextRequest) {
         success: true,
         item: {
           key: updated.key,
-          ...(updated.value ?? defaultSettings),
+          ...defaultSettings,
+          ...(updated.value ?? {}),
           updatedAt: updated.updatedAt,
         },
       },

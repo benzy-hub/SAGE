@@ -30,9 +30,10 @@ export default async function StudentLayout({
       navItems={studentNavItems}
       mobileNavItems={[
         studentNavItems[0],
+        studentNavItems[1],
         studentNavItems[2],
+        studentNavItems[4],
         studentNavItems[5],
-        studentNavItems[6],
       ]}
       currentUser={{
         id: user._id.toString(),
