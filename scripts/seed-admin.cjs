@@ -99,6 +99,8 @@ const hodNames = [
   "Prof. Oluwaseun",
 ];
 
+const SCHOOL_EMAIL_DOMAIN = "bowen.edu.ng";
+
 function levelToYear(level) {
   const parsed = Number(level);
   if (!Number.isFinite(parsed)) return 1;
@@ -145,12 +147,6 @@ function parseEnv(filePath) {
 
   const User = mongoose.models.User || mongoose.model("User", userSchema);
   const db = mongoose.connection.db;
-  const sessions = db.collection("sessions");
-  const accounts = db.collection("accounts");
-  const verificationTokens = db.collection("emailverificationtokens");
-  const resetTokens = db.collection("passwordresettokens");
-  const studentProfiles = db.collection("studentprofiles");
-  const advisorStudentConnections = db.collection("advisorstudentconnections");
 
   // ── Extra Mongoose models for rich seed data ──────────────────────
   const appointmentSeedSchema = new mongoose.Schema(
@@ -245,7 +241,11 @@ function parseEnv(filePath) {
       organization: String,
       phone: String,
       budget: String,
+      quoteCategory: String,
+      quoteText: String,
+      emailDelivered: { type: Boolean, default: false },
       isRead: { type: Boolean, default: false },
+      status: { type: String, default: "OPEN" },
     },
     { timestamps: true },
   );
@@ -280,6 +280,11 @@ function parseEnv(filePath) {
     mongoose.models.ContactSubmission ||
     mongoose.model("ContactSubmission", contactSubmissionSeedSchema);
 
+  await db.dropDatabase();
+
+  const studentProfiles = db.collection("studentprofiles");
+  const advisorStudentConnections = db.collection("advisorstudentconnections");
+
   const canonicalUsers = [
     {
       email: "admin@gmail.com",
@@ -300,30 +305,13 @@ function parseEnv(filePath) {
       profile: null,
     },
     {
-      email: "pending.advisor@gmail.com",
+      email: "advisor2@gmail.com",
       password: "123456",
-      firstName: "Pending",
+      firstName: "Demo",
       lastName: "Advisor",
       role: "ADVISOR",
-      status: "PENDING_APPROVAL",
-      profile: null,
-    },
-    {
-      email: "student@gmail.com",
-      password: "123456",
-      firstName: "SAGE",
-      lastName: "Student",
-      role: "STUDENT",
       status: "ACTIVE",
-      profile: {
-        studentId: "BU26CSC0001",
-        college: "College of Computing and Communication Studies",
-        department: "Computer Science",
-        program: "Computer Science",
-        level: "300",
-        year: 3,
-        phone: "+2348000000000",
-      },
+      profile: null,
     },
   ];
 
@@ -357,12 +345,11 @@ function parseEnv(filePath) {
   ];
 
   const seedYear = new Date().getFullYear().toString().slice(-2);
-  let sequence = 2;
+  let sequence = 1;
   let nameIndex = 0;
   let hodIndex = 0;
-
-  const generatedAdvisors = [];
   const generatedStudents = [];
+  let primaryStudentCreated = false;
 
   for (const [collegeName, collegeInfo] of Object.entries(
     collegesAndDepartments,
@@ -398,127 +385,56 @@ function parseEnv(filePath) {
     );
 
     for (const departmentInfo of departments) {
-      const advisorFullName = departmentInfo.hod.replace("Prof. ", "").trim();
-      const [
-        advisorFirst = firstNames[nameIndex % firstNames.length],
-        advisorLast = lastNames[nameIndex % lastNames.length],
-      ] = advisorFullName.split(/\s+/, 2);
-      nameIndex += 1;
+      const level =
+        departmentInfo.availableLevels.includes("300")
+          ? "300"
+          : departmentInfo.availableLevels[0];
+      const number = String(sequence).padStart(4, "0");
+      const matricNumber = `BU${seedYear}${departmentInfo.departmentCode}${number}`;
+      const firstName = primaryStudentCreated
+        ? firstNames[nameIndex % firstNames.length]
+        : "SAGE";
+      const lastName = primaryStudentCreated
+        ? lastNames[nameIndex % lastNames.length]
+        : "Student";
+      const email = primaryStudentCreated
+        ? `${matricNumber.toLowerCase()}@${SCHOOL_EMAIL_DOMAIN}`
+        : "student@gmail.com";
 
-      generatedAdvisors.push({
-        email: `advisor.${collegeInfo.code.toLowerCase()}.${departmentInfo.departmentCode.toLowerCase()}@bellsuniversity.edu.ng`,
+      generatedStudents.push({
+        email,
         password: "123456",
-        firstName: advisorFirst,
-        lastName: advisorLast,
-        role: "ADVISOR",
+        firstName,
+        lastName,
+        role: "STUDENT",
         status: "ACTIVE",
-        profile: null,
+        profile: {
+          studentId: matricNumber,
+          college: collegeName,
+          department: departmentInfo.departmentName,
+          program: departmentInfo.departmentName,
+          level,
+          year: levelToYear(level),
+          phone: "+2348000000000",
+        },
         college: collegeName,
         department: departmentInfo.departmentName,
       });
 
-      for (
-        let i = 0;
-        i < Math.min(departmentInfo.availableLevels.length, 3);
-        i += 1
-      ) {
-        const level = departmentInfo.availableLevels[i];
-        const number = String(sequence).padStart(4, "0");
-        const matricNumber = `BU${seedYear}${departmentInfo.departmentCode}${number}`;
-        const firstName = firstNames[nameIndex % firstNames.length];
-        const lastName = lastNames[nameIndex % lastNames.length];
-        nameIndex += 1;
-        sequence += 1;
-
-        generatedStudents.push({
-          email: `${matricNumber.toLowerCase()}@student.bellsuniversity.edu.ng`,
-          password: "123456",
-          firstName,
-          lastName,
-          role: "STUDENT",
-          status: "ACTIVE",
-          profile: {
-            studentId: matricNumber,
-            college: collegeName,
-            department: departmentInfo.departmentName,
-            program: departmentInfo.departmentName,
-            level,
-            year: levelToYear(level),
-            phone: "+2348000000000",
-          },
-          college: collegeName,
-          department: departmentInfo.departmentName,
-        });
-      }
+      primaryStudentCreated = true;
+      nameIndex += 1;
+      sequence += 1;
     }
   }
 
   const allSeedUsers = [
     ...canonicalUsers,
-    ...generatedAdvisors,
     ...generatedStudents,
   ];
 
   const hashedPasswords = await Promise.all(
     allSeedUsers.map(async (user) => bcrypt.hash(user.password, 12)),
   );
-
-  // Clear all platform data so each seed run starts fresh
-  await Promise.all([
-    AppointmentM.deleteMany({}),
-    CaseNoteM.deleteMany({}),
-    ChatMessageM.deleteMany({}),
-    PlatformSettingM.deleteMany({}),
-    CollegeCatalogM.deleteMany({}),
-    DepartmentCatalogM.deleteMany({}),
-    AdvisorAvailabilityM.deleteMany({}),
-    AdvisorRatingM.deleteMany({}),
-    TestimonialM.deleteMany({}),
-    ContactSubmissionM.deleteMany({}),
-  ]);
-
-  const existingAdmins = await User.find({ role: "ADMIN" }).select("_id email");
-  const adminIds = existingAdmins.map((admin) => admin._id);
-
-  if (adminIds.length > 0) {
-    await Promise.all([
-      sessions.deleteMany({ userId: { $in: adminIds } }),
-      accounts.deleteMany({ userId: { $in: adminIds } }),
-      verificationTokens.deleteMany({ userId: { $in: adminIds } }),
-      resetTokens.deleteMany({ userId: { $in: adminIds } }),
-      studentProfiles.deleteMany({ userId: { $in: adminIds } }),
-      advisorStudentConnections.deleteMany({
-        $or: [
-          { advisorId: { $in: adminIds } },
-          { studentId: { $in: adminIds } },
-        ],
-      }),
-      User.deleteMany({ _id: { $in: adminIds } }),
-    ]);
-  }
-
-  const existingCanonicalUsers = await User.find({
-    email: { $in: allSeedUsers.map((user) => user.email) },
-  }).select("_id email");
-
-  const canonicalUserIds = existingCanonicalUsers.map((user) => user._id);
-
-  if (canonicalUserIds.length > 0) {
-    await Promise.all([
-      sessions.deleteMany({ userId: { $in: canonicalUserIds } }),
-      accounts.deleteMany({ userId: { $in: canonicalUserIds } }),
-      verificationTokens.deleteMany({ userId: { $in: canonicalUserIds } }),
-      resetTokens.deleteMany({ userId: { $in: canonicalUserIds } }),
-      studentProfiles.deleteMany({ userId: { $in: canonicalUserIds } }),
-      advisorStudentConnections.deleteMany({
-        $or: [
-          { advisorId: { $in: canonicalUserIds } },
-          { studentId: { $in: canonicalUserIds } },
-        ],
-      }),
-      User.deleteMany({ _id: { $in: canonicalUserIds } }),
-    ]);
-  }
 
   const createdUsers = [];
 
@@ -546,39 +462,19 @@ function parseEnv(filePath) {
     createdUsers.push(createdUser);
   }
 
-  const advisorByEmail = new Map(
-    createdUsers
-      .filter((user) => user.role === "ADVISOR")
-      .map((advisor) => [advisor.email, advisor]),
-  );
-
   const studentDocs = createdUsers.filter((user) => user.role === "STUDENT");
   const profileDocs = await studentProfiles
     .find({ userId: { $in: studentDocs.map((item) => item._id) } })
     .toArray();
 
-  const advisorMapByCollegeAndDepartment = new Map();
-  const advisorMapByCollege = new Map();
-  for (const advisorSeed of generatedAdvisors) {
-    const advisorDoc = advisorByEmail.get(advisorSeed.email);
-    if (advisorDoc) {
-      advisorMapByCollegeAndDepartment.set(
-        `${advisorSeed.college}::${advisorSeed.department ?? ""}`,
-        advisorDoc._id,
-      );
-      advisorMapByCollege.set(advisorSeed.college, advisorDoc._id);
-    }
-  }
+  const advisorDocs = createdUsers.filter((user) => user.role === "ADVISOR");
 
-  for (const profile of profileDocs) {
-    const advisorId =
-      advisorMapByCollegeAndDepartment.get(
-        `${profile.college ?? ""}::${profile.department ?? ""}`,
-      ) ?? advisorMapByCollege.get(profile.college);
-    if (!advisorId) continue;
+  for (const [index, profile] of profileDocs.entries()) {
+    const advisor = advisorDocs[index % advisorDocs.length];
+    if (!advisor) continue;
     await advisorStudentConnections.updateOne(
       {
-        advisorId,
+        advisorId: advisor._id,
         studentId: profile.userId,
       },
       {
@@ -935,20 +831,20 @@ function parseEnv(filePath) {
 
   // Platform settings
   await PlatformSettingM.findOneAndUpdate(
-    { key: "platform" },
+    { key: "platform-settings" },
     {
       $set: {
         value: {
           allowRegistration: true,
           maintenanceMode: false,
-          supportEmail: "info@bowenuniversity.edu.ng",
+          supportEmail: `info@${SCHOOL_EMAIL_DOMAIN}`,
           defaultStudentYear: 1,
           maxMessageLength: 2000,
           notifyAdminsOnNewUser: true,
         },
         updatedAt: new Date(),
       },
-      $setOnInsert: { key: "platform", createdAt: new Date() },
+      $setOnInsert: { key: "platform-settings", createdAt: new Date() },
     },
     { upsert: true },
   );
@@ -1046,7 +942,7 @@ function parseEnv(filePath) {
   await ContactSubmissionM.insertMany([
     {
       name: "Admissions Office",
-      email: "contact@bowen-demo.edu.ng",
+      email: `contact@${SCHOOL_EMAIL_DOMAIN}`,
       message:
         "We would like to explore deploying SAGE across multiple departments for academic advising and student support.",
       type: "get-quote",
@@ -1060,7 +956,7 @@ function parseEnv(filePath) {
     },
     {
       name: "Prospective Partner",
-      email: "hello@example.org",
+      email: `hello@${SCHOOL_EMAIL_DOMAIN}`,
       message:
         "I would like to know whether SAGE supports advisor availability, student ratings, and institution-wide reporting.",
       type: "say-hi",
@@ -1071,7 +967,7 @@ function parseEnv(filePath) {
     },
     {
       name: "Student Affairs Office",
-      email: "studentaffairs@bowen-demo.edu.ng",
+      email: `studentaffairs@${SCHOOL_EMAIL_DOMAIN}`,
       message:
         "Please confirm the turnaround time for support escalations and whether we can assign internal owners to each request.",
       type: "say-hi",
@@ -1086,10 +982,10 @@ function parseEnv(filePath) {
     "Rich seed data ready ✅  (appointments, availability, ratings, testimonials, contact, case notes, messages, settings, catalogs)",
   );
   console.log("Seed users ready ✅");
-  console.log(`Cleared existing admin accounts: ${existingAdmins.length}`);
+  console.log("Dropped existing database and rebuilt clean seed data.");
   console.log(`Recreated accounts: ${createdUsers.length}`);
   console.log(
-    `Generated advisors: ${generatedAdvisors.length}, students: ${generatedStudents.length}`,
+    `Demo advisors: ${advisorDocs.length}, department students: ${generatedStudents.length}`,
   );
 
   for (const user of createdUsers) {

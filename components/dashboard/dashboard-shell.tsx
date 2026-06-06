@@ -73,6 +73,10 @@ const navIcons: Record<
   settings: Settings,
 };
 
+const socketRealtimeEnabled =
+  process.env.NODE_ENV !== "production" ||
+  process.env.NEXT_PUBLIC_ENABLE_SOCKET_IO === "true";
+
 export function DashboardShell({
   role,
   title,
@@ -127,35 +131,42 @@ export function DashboardShell({
     return () => document.body.classList.remove("nav-open");
   }, [mobileMenuOpen]);
 
+  const loadUnreadCount = async () => {
+    try {
+      const response = await fetch("/api/messages/unread-count", {
+        cache: "no-store",
+      });
+      const data = await response.json();
+      setUnreadCount(Number(data?.unreadCount ?? 0));
+    } catch {
+      setUnreadCount(0);
+    }
+  };
+
   useEffect(() => {
-    const loadUnreadCount = async () => {
-      try {
-        const response = await fetch("/api/messages/unread-count", {
-          cache: "no-store",
-        });
-        const data = await response.json();
-        setUnreadCount(Number(data?.unreadCount ?? 0));
-      } catch {
-        setUnreadCount(0);
-      }
-    };
-
     void loadUnreadCount();
-
-    return () => {
-      // no-op cleanup for initial fetch effect
-    };
   }, []);
 
   useEffect(() => {
     if (!currentUser.id) return;
+    if (!socketRealtimeEnabled) {
+      const interval = window.setInterval(() => {
+        void loadUnreadCount();
+      }, 15000);
+      return () => window.clearInterval(interval);
+    }
 
     const initSocket = async () => {
-      await fetch("/api/socket");
+      try {
+        await fetch("/api/socket");
+      } catch {
+        return;
+      }
 
       const socket = io({
         path: "/api/socket_io",
         transports: ["websocket", "polling"],
+        reconnectionAttempts: 3,
       });
 
       socket.emit("join", { userId: currentUser.id });

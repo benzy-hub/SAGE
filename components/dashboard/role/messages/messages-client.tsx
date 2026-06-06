@@ -10,6 +10,7 @@ import {
   CheckCheck,
   ChevronLeft,
   Loader,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,6 +52,10 @@ interface MessagesClientProps {
   role: "ADVISOR" | "STUDENT";
 }
 
+const socketRealtimeEnabled =
+  process.env.NODE_ENV !== "production" ||
+  process.env.NEXT_PUBLIC_ENABLE_SOCKET_IO === "true";
+
 export function MessagesClient({ role }: MessagesClientProps) {
   const searchParams = useSearchParams();
   const socketRef = useRef<Socket | null>(null);
@@ -79,6 +84,7 @@ export function MessagesClient({ role }: MessagesClientProps) {
   const [error, setError] = useState<string>("");
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [mobileView, setMobileView] = useState<"contacts" | "chat">("contacts");
+  const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -92,6 +98,51 @@ export function MessagesClient({ role }: MessagesClientProps) {
   const selectedContact = useMemo(
     () => contacts.find((contact) => contact.id === selectedContactId) ?? null,
     [contacts, selectedContactId],
+  );
+
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+
+  const filteredContacts = useMemo(
+    () =>
+      contacts.filter((contact) => {
+        if (!normalizedSearch) return true;
+        const fullName =
+          `${contact.firstName} ${contact.lastName}`.toLowerCase();
+        return (
+          fullName.includes(normalizedSearch) ||
+          contact.email.toLowerCase().includes(normalizedSearch)
+        );
+      }),
+    [contacts, normalizedSearch],
+  );
+
+  const filteredIncomingRequests = useMemo(
+    () =>
+      incomingRequests.filter((request) => {
+        if (!normalizedSearch) return true;
+        if (!request.from) return false;
+        const fullName =
+          `${request.from.firstName} ${request.from.lastName}`.toLowerCase();
+        return (
+          fullName.includes(normalizedSearch) ||
+          request.from.email.toLowerCase().includes(normalizedSearch)
+        );
+      }),
+    [incomingRequests, normalizedSearch],
+  );
+
+  const filteredAvailableAdvisors = useMemo(
+    () =>
+      availableAdvisors.filter((advisor) => {
+        if (!normalizedSearch) return true;
+        const fullName =
+          `${advisor.firstName} ${advisor.lastName}`.toLowerCase();
+        return (
+          fullName.includes(normalizedSearch) ||
+          advisor.email.toLowerCase().includes(normalizedSearch)
+        );
+      }),
+    [availableAdvisors, normalizedSearch],
   );
 
   const upsertMessage = (nextMessage: ChatMessage) => {
@@ -240,10 +291,22 @@ export function MessagesClient({ role }: MessagesClientProps) {
     }
   };
 
+  const loadSessionRef = useRef(loadSession);
+  const loadContactsRef = useRef(loadContacts);
+  const loadConnectionsRef = useRef(loadConnections);
+  const loadMessagesRef = useRef(loadMessages);
+
   useEffect(() => {
-    void loadSession();
-    void loadContacts(true);
-    void loadConnections(true);
+    loadSessionRef.current = loadSession;
+    loadContactsRef.current = loadContacts;
+    loadConnectionsRef.current = loadConnections;
+    loadMessagesRef.current = loadMessages;
+  });
+
+  useEffect(() => {
+    void loadSessionRef.current();
+    void loadContactsRef.current(true);
+    void loadConnectionsRef.current(true);
   }, []);
 
   useEffect(() => {
@@ -265,13 +328,29 @@ export function MessagesClient({ role }: MessagesClientProps) {
 
   useEffect(() => {
     if (!currentUserId) return;
+    if (!socketRealtimeEnabled) {
+      const interval = window.setInterval(() => {
+        void loadContactsRef.current();
+        void loadConnectionsRef.current();
+        if (selectedContactRef.current) {
+          void loadMessagesRef.current(selectedContactRef.current);
+        }
+      }, 5000);
+
+      return () => window.clearInterval(interval);
+    }
 
     const initSocket = async () => {
-      await fetch("/api/socket");
+      try {
+        await fetch("/api/socket");
+      } catch {
+        return;
+      }
 
       const socket = io({
         path: "/api/socket_io",
         transports: ["websocket", "polling"],
+        reconnectionAttempts: 3,
       });
 
       socketRef.current = socket;
@@ -323,8 +402,8 @@ export function MessagesClient({ role }: MessagesClientProps) {
       });
 
       socket.on("connection:updated", () => {
-        void loadConnections();
-        void loadContacts();
+        void loadConnectionsRef.current();
+        void loadContactsRef.current();
       });
     };
 
@@ -358,6 +437,7 @@ export function MessagesClient({ role }: MessagesClientProps) {
 
       upsertMessage(data.message as ChatMessage);
       setDraft("");
+      void loadContacts();
     } catch {
       setError("Failed to send message.");
     } finally {
@@ -473,6 +553,24 @@ export function MessagesClient({ role }: MessagesClientProps) {
     return `${c.firstName[0] ?? ""}${c.lastName[0] ?? ""}`.toUpperCase();
   };
 
+  const renderSearchInput = (compact = false) => (
+    <div className="relative">
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <input
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        placeholder={
+          role === "ADVISOR"
+            ? "Search students"
+            : "Search advisors"
+        }
+        className={`w-full rounded-xl border border-foreground/15 bg-secondary/60 pl-9 pr-3 text-sm outline-none transition focus:border-foreground/30 focus:bg-background ${
+          compact ? "h-10" : "h-11"
+        }`}
+      />
+    </div>
+  );
+
   return (
     <>
       {/* ════════════════════════════════════════════════════════
@@ -500,8 +598,9 @@ export function MessagesClient({ role }: MessagesClientProps) {
         <div className="grid lg:grid-cols-[288px_minmax(0,1fr)] gap-4">
           {/* ── Sidebar ─────────────────────────────────────── */}
           <aside className="bg-background border-2 border-foreground rounded-2xl flex flex-col h-[68vh] overflow-hidden">
-            <div className="px-4 pt-4 pb-3 border-b border-foreground/10">
+            <div className="px-4 pt-4 pb-3 border-b border-foreground/10 space-y-3">
               <p className="text-sm font-semibold text-foreground">Contacts</p>
+              {renderSearchInput()}
             </div>
 
             <div className="flex-1 overflow-y-auto scrollbar-none p-3 space-y-1">
@@ -513,8 +612,12 @@ export function MessagesClient({ role }: MessagesClientProps) {
                 <p className="text-xs text-muted-foreground text-center py-4">
                   No contacts yet.
                 </p>
+              ) : filteredContacts.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  No matches found.
+                </p>
               ) : (
-                contacts.map((contact) => {
+                filteredContacts.map((contact) => {
                   const active = contact.id === selectedContactId;
                   return (
                     <button
@@ -561,7 +664,7 @@ export function MessagesClient({ role }: MessagesClientProps) {
                     {role === "ADVISOR" ? "Requests" : "Available"}
                   </p>
                   {role === "ADVISOR" &&
-                    incomingRequests.map((req) => (
+                    filteredIncomingRequests.map((req) => (
                       <div
                         key={req.id}
                         className="rounded-lg bg-secondary border border-foreground/10 p-2"
@@ -595,7 +698,7 @@ export function MessagesClient({ role }: MessagesClientProps) {
                       </div>
                     ))}
                   {role === "STUDENT" &&
-                    availableAdvisors.slice(0, 3).map((adv) => (
+                    filteredAvailableAdvisors.slice(0, 3).map((adv) => (
                       <div
                         key={adv.id}
                         className="rounded-lg bg-secondary border border-foreground/10 p-2"
@@ -683,6 +786,8 @@ export function MessagesClient({ role }: MessagesClientProps) {
           </div>
         )}
 
+        <div className="mb-3">{renderSearchInput(true)}</div>
+
         {/* ── Contact list ── */}
         {loadingContacts ? (
           <div className="bg-background rounded-2xl border-2 border-foreground/10 divide-y divide-foreground/5">
@@ -708,9 +813,19 @@ export function MessagesClient({ role }: MessagesClientProps) {
                 : "Accept student requests to chat"}
             </p>
           </div>
+        ) : filteredContacts.length === 0 ? (
+          <div className="bg-background rounded-2xl border-2 border-foreground/10 px-4 py-10 text-center">
+            <Search className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm font-medium text-foreground">
+              No matches found
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Try searching by name or email.
+            </p>
+          </div>
         ) : (
           <div className="bg-background rounded-2xl border-2 border-foreground overflow-hidden divide-y divide-foreground/8">
-            {contacts.map((contact) => (
+            {filteredContacts.map((contact) => (
               <button
                 key={contact.id}
                 type="button"
@@ -753,7 +868,7 @@ export function MessagesClient({ role }: MessagesClientProps) {
               </p>
               <div className="space-y-2">
                 {role === "ADVISOR" &&
-                  incomingRequests.map((req) => (
+                  filteredIncomingRequests.map((req) => (
                     <div
                       key={req.id}
                       className="bg-background rounded-xl border border-foreground/15 p-3 flex items-center gap-3"
@@ -793,7 +908,7 @@ export function MessagesClient({ role }: MessagesClientProps) {
                     </div>
                   ))}
                 {role === "STUDENT" &&
-                  availableAdvisors.slice(0, 5).map((adv) => (
+                  filteredAvailableAdvisors.slice(0, 5).map((adv) => (
                     <div
                       key={adv.id}
                       className="bg-background rounded-xl border border-foreground/15 p-3 flex items-center gap-3"

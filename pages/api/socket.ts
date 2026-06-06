@@ -12,6 +12,14 @@ export default function handler(
   req: NextApiRequest,
   res: NextApiResponseServerIO,
 ) {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.NEXT_PUBLIC_ENABLE_SOCKET_IO !== "true"
+  ) {
+    res.status(204).end();
+    return;
+  }
+
   if (!res.socket.server.io) {
     const io = new IOServer(res.socket.server, {
       path: "/api/socket_io",
