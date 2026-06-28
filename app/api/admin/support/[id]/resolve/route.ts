@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Types } from "mongoose";
 import { requireAdmin } from "@/app/api/admin/_utils";
 import { ContactSubmission } from "@/lib/db/models";
 import { sendEmail } from "@/lib/email/brevo";
@@ -11,13 +12,34 @@ export async function POST(
     const guard = await requireAdmin(req);
     if ("response" in guard) return guard.response;
 
-    const { id } = await params;
+    const { id: rawId } = await params;
+    const ticketType = rawId.split("-")[0];
+    const id = rawId.startsWith("contact-")
+      ? rawId.replace(/^contact-/, "")
+      : rawId;
 
     const { response, status } = await req.json();
 
     if (!response || typeof response !== "string") {
       return NextResponse.json(
         { error: "Response text is required" },
+        { status: 400 },
+      );
+    }
+
+    if (ticketType !== "contact" && rawId.includes("-")) {
+      return NextResponse.json(
+        {
+          error:
+            "Only contact support tickets can be resolved from this action.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid support ticket id" },
         { status: 400 },
       );
     }
